@@ -1,34 +1,31 @@
 Vue.component('note-component', {
-    props: ['note', 'onDragStart', 'onDrag', 'onDragEnd'],
+    props: ['note'],
     template: `
-        <g :transform="'translate(' + note.x + ',' + note.y + ')'"
-           @mousedown="startDrag">
+        <g :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note"
+           @mousedown.stop="startDrag">
             <rect class="note" :width="note.width" :height="note.height"></rect>
             <text x="10" y="30">{{ note.text }}</text>
         </g>
     `,
     methods: {
         startDrag(event) {
-            const startX = event.clientX;
-            const startY = event.clientY;
-            const initialX = this.note.x;
-            const initialY = this.note.y;
-
-            const onMouseMove = (event) => {
-                const dx = event.clientX - startX;
-                const dy = event.clientY - startY;
-                this.onDrag(this.note, initialX + dx, initialY + dy);
-            };
-
-            const onMouseUp = () => {
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-                this.onDragEnd(this.note);
-            };
-
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-            this.onDragStart(this.note);
+            this.$emit('drag-start', this.note, event.clientX, event.clientY);
         }
+    },
+    mounted() {
+        interact(this.$el)
+            .draggable({
+                listeners: {
+                    start: (event) => {
+                        this.$emit('drag-start', this.note, event.clientX, event.clientY);
+                    },
+                    move: (event) => {
+                        this.$emit('drag-move', this.note, event.dx, event.dy);
+                    },
+                    end: (event) => {
+                        this.$emit('drag-end', this.note);
+                    }
+                }
+            });
     }
 });

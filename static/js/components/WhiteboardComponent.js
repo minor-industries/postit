@@ -13,12 +13,16 @@ Vue.component('whiteboard-component', {
                 startY: 0,
                 initialTranslateX: 0,
                 initialTranslateY: 0,
-                movementThreshold: 5,
             },
             dragging: {
                 note: null,
+                startX: 0,
+                startY: 0,
+                initialX: 0,
+                initialY: 0,
                 inProgress: false,
-            }
+            },
+            isDragging: false
         };
     },
     computed: {
@@ -35,21 +39,22 @@ Vue.component('whiteboard-component', {
                 this.zoom.level = Math.max(0.1, this.zoom.level - zoomFactor);
             }
         },
-        addNoteAt(x, y) {
-            const newNote = {
-                id: Date.now(),
-                text: 'New Note',
-                x: x - 50,
-                y: y - 25,
-                width: 100,
-                height: 50,
-            };
-            this.notes.push(newNote);
+        addNoteAt(event) {
+            if (!this.isDragging) { // Only add note if not dragging
+                const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
+                const newNote = {
+                    id: Date.now(),
+                    text: 'New Note',
+                    x: (svgPoint.x - this.pan.translateX) / this.zoom.level - 50,
+                    y: (svgPoint.y - this.pan.translateY) / this.zoom.level - 25,
+                    width: 100,
+                    height: 50,
+                };
+                this.notes.push(newNote);
+            }
+            this.isDragging = false; // Reset the flag after attempting to add a note
         },
         startPanOrClick(event) {
-            // Check if dragging is in progress
-            if (this.dragging.inProgress) return;
-
             this.pan.isPanning = true;
             this.pan.startX = event.clientX;
             this.pan.startY = event.clientY;
@@ -60,55 +65,48 @@ Vue.component('whiteboard-component', {
         },
         onPan(event) {
             if (!this.pan.isPanning) return;
-
             const dx = event.clientX - this.pan.startX;
             const dy = event.clientY - this.pan.startY;
-            if (Math.abs(dx) > this.pan.movementThreshold || Math.abs(dy) > this.pan.movementThreshold) {
-                this.pan.translateX = this.pan.initialTranslateX + dx;
-                this.pan.translateY = this.pan.initialTranslateY + dy;
-            }
+            this.pan.translateX = this.pan.initialTranslateX + dx;
+            this.pan.translateY = this.pan.initialTranslateY + dy;
         },
         endPanOrClick(event) {
             document.removeEventListener('mousemove', this.onPan);
             document.removeEventListener('mouseup', this.endPanOrClick);
-
             this.pan.isPanning = false;
-
-            // If it was a click (not a drag or pan), add a new note
             const dx = event.clientX - this.pan.startX;
             const dy = event.clientY - this.pan.startY;
-            if (Math.abs(dx) <= this.pan.movementThreshold && Math.abs(dy) <= this.pan.movementThreshold) {
-                const { x, y } = this.screenToLogical(event.clientX, event.clientY);
-                this.addNoteAt(x, y);
+            if (Math.abs(dx) <= 5 && Math.abs(dy) <= 5 && !this.isDragging) {
+                this.addNoteAt(event);
             }
         },
-        screenToLogical(clientX, clientY) {
+        startDrag(note, startX, startY) {
+            this.isDragging = true; // Set the flag to indicate a drag is in progress
+            this.dragging.inProgress = true;
+            this.dragging.note = note;
+            this.dragging.startX = startX;
+            this.dragging.startY = startY;
+            this.dragging.initialX = note.x;
+            this.dragging.initialY = note.y;
+        },
+        moveDrag(note, dx, dy) {
+            if (!this.dragging.inProgress) return;
+            note.x += dx / this.zoom.level;
+            note.y += dy / this.zoom.level;
+        },
+        endDrag(note) {
+            this.dragging.inProgress = false;
+            setTimeout(() => { this.isDragging = false }, 0); // Delay resetting the flag to ensure the mouseup is processed
+        },
+        screenToSvgPoint(clientX, clientY) {
             const svg = this.$refs.svgContainer;
             const point = svg.createSVGPoint();
             point.x = clientX;
             point.y = clientY;
-            const svgPoint = point.matrixTransform(svg.getScreenCTM().inverse());
-
-            return {
-                x: (svgPoint.x - this.pan.translateX) / this.zoom.level,
-                y: (svgPoint.y - this.pan.translateY) / this.zoom.level,
-            };
-        },
-        dragStart(note) {
-            this.dragging.inProgress = true;
-            this.dragging.note = note;
-        },
-        drag(note, x, y) {
-            note.x = x;
-            note.y = y;
-        },
-        dragEnd(note) {
-            this.dragging.inProgress = false;
-            this.dragging.note = null;
+            return point.matrixTransform(svg.getScreenCTM().inverse());
         }
     },
     mounted() {
-        // Ensure the component can receive keyboard events
         this.$refs.whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);
     },
@@ -116,15 +114,14 @@ Vue.component('whiteboard-component', {
         window.removeEventListener('keydown', this.handleKeydown);
     },
     template: `
-        <div ref="whiteboard" class="whiteboard" tabindex="0">
-            <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg"
-                @mousedown="startPanOrClick">
+        <div ref="whiteboard" class="whiteboard" tabindex="0" @mousedown="startPanOrClick">
+            <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg">
                 <g :transform="groupTransform">
                     <note-component v-for="note in notes" :key="note.id"
                                     :note="note"
-                                    :onDragStart="dragStart"
-                                    :onDrag="drag"
-                                    :onDragEnd="dragEnd"></note-component>
+                                    @drag-start="startDrag"
+                                    @drag-move="moveDrag"
+                                    @drag-end="endDrag"></note-component>
                 </g>
             </svg>
         </div>
