@@ -10,9 +10,14 @@ Vue.component('note-component', {
         interact(this.$el)
             .draggable({
                 listeners: {
+                    start: (event) => {
+                        this.$emit('drag-start');
+                    },
                     move: (event) => {
-                        this.note.x += event.dx / this.$parent.zoom.level;
-                        this.note.y += event.dy / this.$parent.zoom.level;
+                        this.$emit('drag-move', { dx: event.dx, dy: event.dy });
+                    },
+                    end: (event) => {
+                        this.$emit('drag-end');
                     }
                 }
             });

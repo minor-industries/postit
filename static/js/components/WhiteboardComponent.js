@@ -44,6 +44,10 @@ Vue.component('whiteboard-component', {
             point.x = clientX;
             point.y = clientY;
             return point.matrixTransform(svg.getScreenCTM().inverse());
+        },
+        updateNotePosition(note, dx, dy) {
+            note.x += dx / this.zoom.level;
+            note.y += dy / this.zoom.level;
         }
     },
     mounted() {
@@ -74,7 +78,12 @@ Vue.component('whiteboard-component', {
              @dblclick="addNoteAt">
             <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg">
                 <g :transform="groupTransform">
-                    <note-component v-for="note in notes" :key="note.id" :note="note"></note-component>
+                    <note-component v-for="note in notes" 
+                                    :key="note.id" 
+                                    :note="note" 
+                                    @drag-start="isDragging = true"
+                                    @drag-move="updateNotePosition(note, $event.dx, $event.dy)"
+                                    @drag-end="isDragging = false"></note-component>
                 </g>
             </svg>
         </div>
