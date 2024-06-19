@@ -24,6 +24,8 @@ Vue.component('whiteboard-component', {
                 this.zoom.level += zoomFactor;
             } else if (event.key === '-') {
                 this.zoom.level = Math.max(0.1, this.zoom.level - zoomFactor);
+            } else if (event.key === 's') {
+                console.log(JSON.stringify(this.notes, null, 2));
             }
         },
         addNoteAt(event) {
