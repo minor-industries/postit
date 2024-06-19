@@ -56,19 +56,18 @@ Vue.component('whiteboard-component', {
         this.$refs.whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);
 
-        interact(this.$refs.svgContainer)
-            .draggable({
-                listeners: {
-                    move: (event) => {
-                        this.isDragging = true;
-                        this.pan.translateX += event.dx;
-                        this.pan.translateY += event.dy;
-                    },
-                    end: () => {
-                        this.isDragging = false;
-                    }
+        interact(this.$refs.svgContainer).draggable({
+            listeners: {
+                move: (event) => {
+                    this.isDragging = true;
+                    this.pan.translateX += event.dx;
+                    this.pan.translateY += event.dy;
+                },
+                end: () => {
+                    this.isDragging = false;
                 }
-            });
+            }
+        });
     },
     beforeDestroy() {
         window.removeEventListener('keydown', this.handleKeydown);
