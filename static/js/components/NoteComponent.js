@@ -24,19 +24,27 @@ Vue.component('note-component', {
         </g>
     `,
     mounted() {
-        interact(this.$el)
-            .draggable({
-                listeners: {
-                    start: (event) => {
-                        this.$emit('drag-start', this.note.selected);
-                    },
-                    move: (event) => {
-                        this.$emit('drag-move', { dx: event.dx, dy: event.dy });
-                    },
-                    end: (event) => {
-                        this.$emit('drag-end', this.note.selected);
+        interact(this.$el).draggable({
+            listeners: {
+                start: (event) => {
+                    if (event.shiftKey) {
+                        return;
                     }
+                    this.$emit('drag-start', this.note.selected);
+                },
+                move: (event) => {
+                    if (event.shiftKey) {
+                        return;
+                    }
+                    this.$emit('drag-move', {dx: event.dx, dy: event.dy});
+                },
+                end: (event) => {
+                    if (event.shiftKey) {
+                        return;
+                    }
+                    this.$emit('drag-end', this.note.selected);
                 }
-            });
+            }
+        });
     }
 });

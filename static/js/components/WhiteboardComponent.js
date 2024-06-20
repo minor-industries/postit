@@ -126,8 +126,16 @@ Vue.component('whiteboard-component', {
         deleteSelectedNotes() {
             this.notes = this.notes.filter(note => !note.selected);
         },
+        handleMouseDown(event) {
+            if (event.shiftKey) {
+                this.handleShiftMouseDown(event);
+            } else {
+                // Normal mouse down behavior, possibly dragging notes
+            }
+        },
         handleShiftMouseDown(event) {
             if (event.shiftKey) {
+                event.preventDefault();
                 this.$refs.selectionBox.startSelection(event);
             }
         },
@@ -172,7 +180,7 @@ Vue.component('whiteboard-component', {
              :style="{ cursor: isDragging ? 'grabbing' : 'default' }" 
              tabindex="0" 
              @dblclick="addNoteAt"
-             @mousedown.shift="handleShiftMouseDown">
+             @mousedown="handleMouseDown">
             <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg"
                 @mousemove="handleMouseMove" @mouseup="handleMouseUp">
                 <g :transform="groupTransform">
