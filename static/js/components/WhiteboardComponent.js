@@ -60,6 +60,10 @@ Vue.component('whiteboard-component', {
                 this.seedNotes();
             } else if (event.key === 'l') {
                 this.loadNotes();
+            } else if (event.key === 'd') {
+                this.deleteSelectedNotes();
+            } else if (event.key === 'Escape') {
+                this.unselectAllNotes();
             }
         },
         addNoteAt(event) {
@@ -104,6 +108,14 @@ Vue.component('whiteboard-component', {
             this.notes.forEach(note => {
                 note.selected = note.id === selectedNote.id;
             });
+        },
+        unselectAllNotes() {
+            this.notes.forEach(note => {
+                note.selected = false;
+            });
+        },
+        deleteSelectedNotes() {
+            this.notes = this.notes.filter(note => !note.selected);
         },
         handleShiftMouseDown(event) {
             if (event.shiftKey) {

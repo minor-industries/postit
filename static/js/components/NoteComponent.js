@@ -18,7 +18,7 @@ Vue.component('note-component', {
         }
     },
     template: `
-        <g :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click="selectNote">
+        <g :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click.stop="selectNote">
             <rect class="note" :width="note.width" :height="note.height" :style="noteStyle"></rect>
             <text x="10" y="30">{{ note.text }}</text>
         </g>
