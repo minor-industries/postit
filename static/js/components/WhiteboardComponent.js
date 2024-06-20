@@ -87,8 +87,17 @@ Vue.component('whiteboard-component', {
             return point.matrixTransform(svg.getScreenCTM().inverse());
         },
         updateNotePosition(note, dx, dy) {
-            note.x += dx / this.zoom.level;
-            note.y += dy / this.zoom.level;
+            if (note.selected) {
+                this.notes.forEach(n => {
+                    if (n.selected) {
+                        n.x += dx / this.zoom.level;
+                        n.y += dy / this.zoom.level;
+                    }
+                });
+            } else {
+                note.x += dx / this.zoom.level;
+                note.y += dy / this.zoom.level;
+            }
         },
         handleSelectNotes(selectionBox) {
             this.notes.forEach(note => {

@@ -28,13 +28,13 @@ Vue.component('note-component', {
             .draggable({
                 listeners: {
                     start: (event) => {
-                        this.$emit('drag-start');
+                        this.$emit('drag-start', this.note.selected);
                     },
                     move: (event) => {
                         this.$emit('drag-move', { dx: event.dx, dy: event.dy });
                     },
                     end: (event) => {
-                        this.$emit('drag-end');
+                        this.$emit('drag-end', this.note.selected);
                     }
                 }
             });
