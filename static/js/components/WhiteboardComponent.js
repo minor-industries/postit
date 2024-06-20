@@ -42,6 +42,7 @@ Vue.component('whiteboard-component', {
                     y: y += 55,
                     width: 10 * note.length + 10,
                     height: 50,
+                    selected: false,
                 });
             });
         },
@@ -69,6 +70,7 @@ Vue.component('whiteboard-component', {
                 y: (svgPoint.y - this.pan.translateY) / this.zoom.level - 25,
                 width: 100,
                 height: 50,
+                selected: false,
             };
             this.notes.push(newNote);
         },

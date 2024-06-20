@@ -6,7 +6,7 @@ Vue.component('note-component', {
                 console.log("selected", this.note.text);
             }
             return {
-                fill: this.note.selected ? 'yellow' : 'yellow', // Change fill color for selected notes
+                fill: this.note.selected ? 'lightblue' : 'yellow', // Change fill color for selected notes
                 stroke: this.note.selected ? 'red' : 'black', // Add a stroke for selected notes
                 strokeWidth: this.note.selected ? 2 : 1 // Thicker stroke for selected notes
             };
