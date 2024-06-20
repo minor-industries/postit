@@ -14,6 +14,7 @@ Vue.component('note-component', {
     },
     methods: {
         selectNote() {
+            console.log("selectNote");
             this.$emit('select-note', this.note);
         }
     },

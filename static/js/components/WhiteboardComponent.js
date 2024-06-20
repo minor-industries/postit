@@ -118,6 +118,10 @@ Vue.component('whiteboard-component', {
                 note.selected = note.id === selectedNote.id;
             });
         },
+        handleNoteDragEnd() {
+            console.log("drag end");
+            this.isDragging = false;
+        },
         unselectAllNotes() {
             this.notes.forEach(note => {
                 note.selected = false;
@@ -190,7 +194,7 @@ Vue.component('whiteboard-component', {
                                     @select-note="selectNoteHandler"
                                     @drag-start="isDragging = true"
                                     @drag-move="updateNotePosition(note, $event.dx, $event.dy)"
-                                    @drag-end="isDragging = false"></note-component>
+                                    @drag-end="handleNoteDragEnd"></note-component>
                     <selection-box ref="selectionBox" @select-notes="handleSelectNotes"></selection-box>
                 </g>
             </svg>
