@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package kv;
+
+option go_package = "kv_service/kv";
+
+service KVService {
+  rpc SaveValue (SaveValueRequest) returns (SaveValueResponse);
+  rpc LoadValue (LoadValueRequest) returns (LoadValueResponse);
+}
+
+message SaveValueRequest {
+  string key = 1;
+  string value = 2;
+}
+
+message SaveValueResponse {
+  bool success = 1;
+}
+
+message LoadValueRequest {
+  string key = 1;
+}
+
+message LoadValueResponse {
+  string value = 1;
+  bool found = 2;
+}
