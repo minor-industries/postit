@@ -33,6 +33,7 @@ Vue.component('whiteboard-component', {
         },
 
         seedNotes() {
+            this.notes = [];
             let y = 0
             notes.forEach(note => {
                 this.notes.push({
@@ -99,6 +100,11 @@ Vue.component('whiteboard-component', {
                 note.selected = selected;
             });
         },
+        selectNoteHandler(selectedNote) {
+            this.notes.forEach(note => {
+                note.selected = note.id === selectedNote.id;
+            });
+        },
         handleShiftMouseDown(event) {
             if (event.shiftKey) {
                 this.$refs.selectionBox.startSelection(event);
@@ -152,6 +158,7 @@ Vue.component('whiteboard-component', {
                     <note-component v-for="note in notes" 
                                     :key="note.id" 
                                     :note="note" 
+                                    @select-note="selectNoteHandler"
                                     @drag-start="isDragging = true"
                                     @drag-move="updateNotePosition(note, $event.dx, $event.dy)"
                                     @drag-end="isDragging = false"></note-component>
