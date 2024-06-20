@@ -1,3 +1,5 @@
+import {notes} from "./seed.js"
+
 Vue.component('whiteboard-component', {
     data() {
         return {
@@ -30,6 +32,20 @@ Vue.component('whiteboard-component', {
             this.notes = JSON.parse(notes);
         },
 
+        seedNotes() {
+            let y = 0
+            notes.forEach(note => {
+                this.notes.push({
+                    id: Date.now(),
+                    text: note,
+                    x: 10,
+                    y: y += 55,
+                    width: 10 * note.length + 10,
+                    height: 50,
+                });
+            });
+        },
+
         handleKeydown(event) {
             const zoomFactor = 0.1;
             if (event.key === '+' || event.key === '=') {
@@ -38,8 +54,10 @@ Vue.component('whiteboard-component', {
                 this.zoom.level = Math.max(0.1, this.zoom.level - zoomFactor);
             } else if (event.key === 's') {
                 this.saveNotes();
+            } else if (event.key === 'e') {
+                this.seedNotes();
             } else if (event.key === 'l') {
-                // this.loadNotes();
+                this.loadNotes();
             }
         },
         addNoteAt(event) {
