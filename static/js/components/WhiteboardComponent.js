@@ -44,6 +44,7 @@ Vue.component('whiteboard-component', {
                     width: 10 * note.length + 10,
                     height: 50,
                     selected: false,
+                    isNoteDragging: false,
                 });
             });
         },
@@ -76,6 +77,7 @@ Vue.component('whiteboard-component', {
                 width: 100,
                 height: 50,
                 selected: false,
+                isNoteDragging: false,
             };
             this.notes.push(newNote);
         },

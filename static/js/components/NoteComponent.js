@@ -15,7 +15,9 @@ Vue.component('note-component', {
     methods: {
         selectNote() {
             console.log("selectNote");
-            this.$emit('select-note', this.note);
+            if (!this.note.isNoteDragging) { // Only select if not dragging
+                this.$emit('select-note', this.note);
+            }
         }
     },
     template: `
@@ -31,6 +33,7 @@ Vue.component('note-component', {
                     if (event.shiftKey) {
                         return;
                     }
+                    this.note.isNoteDragging = true; // Set dragging flag
                     this.$emit('drag-start', this.note.selected);
                 },
                 move: (event) => {
@@ -43,6 +46,9 @@ Vue.component('note-component', {
                     if (event.shiftKey) {
                         return;
                     }
+                    setTimeout(() => {
+                        this.note.isNoteDragging = false; // Unset dragging flag with a slight delay
+                    }, 100); // Adjust the delay as needed
                     this.$emit('drag-end', this.note.selected);
                 }
             }
