@@ -8,5 +8,5 @@ func main() {
 	r := gin.Default()
 	r.Static("/static", "./static")
 	r.StaticFile("/", "./static/index.html")
-	r.Run(":8081")
+	r.Run(":8000")
 }

@@ -18,6 +18,18 @@ Vue.component('whiteboard-component', {
         },
     },
     methods: {
+        saveNotes() {
+            localStorage.setItem("notes", JSON.stringify(this.notes, null, 2));
+        },
+
+        loadNotes() {
+            const notes = localStorage.getItem("notes");
+            if (!notes) {
+                return;
+            }
+            this.notes = JSON.parse(notes);
+        },
+
         handleKeydown(event) {
             const zoomFactor = 0.1;
             if (event.key === '+' || event.key === '=') {
@@ -25,7 +37,9 @@ Vue.component('whiteboard-component', {
             } else if (event.key === '-') {
                 this.zoom.level = Math.max(0.1, this.zoom.level - zoomFactor);
             } else if (event.key === 's') {
-                console.log(JSON.stringify(this.notes, null, 2));
+                this.saveNotes();
+            } else if (event.key === 'l') {
+                // this.loadNotes();
             }
         },
         addNoteAt(event) {
@@ -68,6 +82,8 @@ Vue.component('whiteboard-component', {
                 }
             }
         });
+
+        this.loadNotes();
     },
     beforeDestroy() {
         window.removeEventListener('keydown', this.handleKeydown);
