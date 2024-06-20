@@ -2,19 +2,21 @@ Vue.component('note-component', {
     props: ['note'],
     computed: {
         noteStyle() {
-            if (this.note.selected) {
-                console.log("selected", this.note.text);
-            }
+            const regularColor = this.note.color || "yellow";
             return {
-                fill: this.note.selected ? 'lightblue' : 'yellow', // Change fill color for selected notes
+                fill: this.note.selected ? 'lightblue' : regularColor,
                 stroke: this.note.selected ? 'red' : 'black', // Add a stroke for selected notes
                 strokeWidth: this.note.selected ? 2 : 1 // Thicker stroke for selected notes
+            };
+        },
+        textStyle() {
+            return {
+                fill: this.note.textColor || 'black' // Default text color is black
             };
         }
     },
     methods: {
         selectNote() {
-            console.log("selectNote");
             if (!this.note.isNoteDragging) { // Only select if not dragging
                 this.$emit('select-note', this.note);
             }
@@ -23,7 +25,9 @@ Vue.component('note-component', {
     template: `
         <g :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click.stop="selectNote">
             <rect class="note" :width="note.width" :height="note.height" :style="noteStyle"></rect>
-            <text x="10" y="30">{{ note.text }}</text>
+            <text x="10" y="30" :style="textStyle">
+                {{ note.text }}
+            </text>
         </g>
     `,
     mounted() {

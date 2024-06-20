@@ -1,4 +1,5 @@
 import {notes} from "./seed.js"
+import {changeNoteColor} from "./ColorChanger.js";
 
 async function saveValue(key, value) {
     const url = '/twirp/kv.KVService/SaveValue';
@@ -73,8 +74,16 @@ Vue.component('whiteboard-component', {
         },
 
         async loadNotes() {
-            const notes = await loadValue("notes")
-            this.notes = JSON.parse(notes.value);
+            const json = await loadValue("notes");
+            let notes = JSON.parse(json.value);
+            notes.forEach(note => {
+                if (!note.color) {
+                    note.color = "yellow";
+                    note.textColor = "black";
+                }
+            })
+
+            this.notes = notes;
         },
 
         seedNotes() {
@@ -90,6 +99,8 @@ Vue.component('whiteboard-component', {
                     height: 50,
                     selected: false,
                     isNoteDragging: false,
+                    color: "yellow",
+                    textColor: "black",
                 });
             });
         },
@@ -103,13 +114,22 @@ Vue.component('whiteboard-component', {
             } else if (event.key === 's') {
                 this.saveNotes();
             } else if (event.key === 'e') {
-                this.seedNotes();
+                // this.seedNotes();
             } else if (event.key === 'l') {
                 this.loadNotes();
             } else if (event.key === 'd') {
                 this.deleteSelectedNotes();
             } else if (event.key === 'Escape') {
                 this.unselectAllNotes();
+            } else if (event.key === 'c') {
+                changeNoteColor().then(value => {
+                    this.notes.forEach(note => {
+                        if (note.selected) {
+                            note.color = value.color;
+                            note.textColor = value.textColor;
+                        }
+                    });
+                })
             }
         },
         addNoteAt(event) {
@@ -123,6 +143,7 @@ Vue.component('whiteboard-component', {
                 height: 50,
                 selected: false,
                 isNoteDragging: false,
+                color: "yellow",
             };
             this.notes.push(newNote);
         },
