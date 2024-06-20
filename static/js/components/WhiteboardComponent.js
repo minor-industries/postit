@@ -1,5 +1,6 @@
 import {notes} from "./seed.js"
 import {changeNoteColor} from "./ColorChanger.js";
+import {editNoteText} from "./EditNote.js";
 
 async function saveValue(key, value) {
     const url = '/twirp/kv.KVService/SaveValue';
@@ -113,8 +114,6 @@ Vue.component('whiteboard-component', {
                 this.zoom.level = Math.max(0.1, this.zoom.level - zoomFactor);
             } else if (event.key === 's') {
                 this.saveNotes();
-            } else if (event.key === 'e') {
-                // this.seedNotes();
             } else if (event.key === 'l') {
                 this.loadNotes();
             } else if (event.key === 'd') {
@@ -130,8 +129,28 @@ Vue.component('whiteboard-component', {
                         }
                     });
                 })
+            } else if (event.key === 'e') {
+                this.handleEditNote();
             }
         },
+
+        handleEditNote() {
+            const selectedNotes = this.notes.filter(note => note.selected);
+            if (selectedNotes.length !== 1) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Please select exactly one note to edit.',
+                });
+            } else {
+                const note = selectedNotes[0];
+                editNoteText(note).then((newText) => {
+                    note.text = newText;
+                    this.adjustTextSize(note);
+                });
+            }
+        },
+
         addNoteAt(event) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
             const newNote = {
