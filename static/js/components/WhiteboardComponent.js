@@ -84,16 +84,18 @@ Vue.component('whiteboard-component', {
             note.y += dy / this.zoom.level;
         },
         handleSelectNotes(selectionBox) {
-            // Handle logic for selecting notes within the selectionBox
-            const selectedNotes = this.notes.filter(note => {
-                return (
+            this.notes.forEach(note => {
+                const selected = (
                     note.x + note.width >= selectionBox.x &&
                     note.x <= selectionBox.x + selectionBox.width &&
                     note.y + note.height >= selectionBox.y &&
                     note.y <= selectionBox.y + selectionBox.height
                 );
+                if (selected) {
+                    console.log("selected2", note.text);
+                }
+                note.selected = selected;
             });
-            console.log('Selected notes:', selectedNotes);
         },
         handleShiftMouseDown(event) {
             if (event.shiftKey) {
