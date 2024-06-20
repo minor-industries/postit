@@ -1,5 +1,53 @@
 import {notes} from "./seed.js"
 
+async function saveValue(key, value) {
+    const url = '/twirp/kv.KVService/SaveValue';
+
+    const data = {
+        key: key,
+        value: value
+    };
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    return responseData;
+}
+
+async function loadValue(key) {
+    const url = '/twirp/kv.KVService/LoadValue';
+
+    const data = {
+        key: key
+    };
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    return responseData;
+}
+
+
 Vue.component('whiteboard-component', {
     data() {
         return {
@@ -21,15 +69,12 @@ Vue.component('whiteboard-component', {
     },
     methods: {
         saveNotes() {
-            localStorage.setItem("notes", JSON.stringify(this.notes, null, 2));
+            saveValue("notes", JSON.stringify(this.notes));
         },
 
-        loadNotes() {
-            const notes = localStorage.getItem("notes");
-            if (!notes) {
-                return;
-            }
-            this.notes = JSON.parse(notes);
+        async loadNotes() {
+            const notes = await loadValue("notes")
+            this.notes = JSON.parse(notes.value);
         },
 
         seedNotes() {
