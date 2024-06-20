@@ -37,7 +37,7 @@ Vue.component('whiteboard-component', {
             let y = 0
             notes.forEach(note => {
                 this.notes.push({
-                    id: Date.now(),
+                    id: uuid.v4(),
                     text: note,
                     x: 10,
                     y: y += 55,
@@ -65,7 +65,7 @@ Vue.component('whiteboard-component', {
         addNoteAt(event) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
             const newNote = {
-                id: Date.now(),
+                id: uuid.v4(),
                 text: 'New Note',
                 x: (svgPoint.x - this.pan.translateX) / this.zoom.level - 50,
                 y: (svgPoint.y - this.pan.translateY) / this.zoom.level - 25,
