@@ -82,6 +82,33 @@ Vue.component('whiteboard-component', {
         updateNotePosition(note, dx, dy) {
             note.x += dx / this.zoom.level;
             note.y += dy / this.zoom.level;
+        },
+        handleSelectNotes(selectionBox) {
+            // Handle logic for selecting notes within the selectionBox
+            const selectedNotes = this.notes.filter(note => {
+                return (
+                    note.x + note.width >= selectionBox.x &&
+                    note.x <= selectionBox.x + selectionBox.width &&
+                    note.y + note.height >= selectionBox.y &&
+                    note.y <= selectionBox.y + selectionBox.height
+                );
+            });
+            console.log('Selected notes:', selectedNotes);
+        },
+        handleShiftMouseDown(event) {
+            if (event.shiftKey) {
+                this.$refs.selectionBox.startSelection(event);
+            }
+        },
+        handleMouseMove(event) {
+            if (this.$refs.selectionBox.isActive) {
+                this.$refs.selectionBox.updateSelection(event);
+            }
+        },
+        handleMouseUp(event) {
+            if (this.$refs.selectionBox.isActive) {
+                this.$refs.selectionBox.endSelection(event);
+            }
         }
     },
     mounted() {
@@ -91,6 +118,9 @@ Vue.component('whiteboard-component', {
         interact(this.$refs.svgContainer).draggable({
             listeners: {
                 move: (event) => {
+                    if (event.shiftKey) {
+                        return; // Skip panning if shift key is pressed
+                    }
                     this.isDragging = true;
                     this.pan.translateX += event.dx;
                     this.pan.translateY += event.dy;
@@ -110,8 +140,10 @@ Vue.component('whiteboard-component', {
         <div ref="whiteboard" class="whiteboard" 
              :style="{ cursor: isDragging ? 'grabbing' : 'default' }" 
              tabindex="0" 
-             @dblclick="addNoteAt">
-            <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg">
+             @dblclick="addNoteAt"
+             @mousedown.shift="handleShiftMouseDown">
+            <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg"
+                @mousemove="handleMouseMove" @mouseup="handleMouseUp">
                 <g :transform="groupTransform">
                     <note-component v-for="note in notes" 
                                     :key="note.id" 
@@ -119,6 +151,7 @@ Vue.component('whiteboard-component', {
                                     @drag-start="isDragging = true"
                                     @drag-move="updateNotePosition(note, $event.dx, $event.dy)"
                                     @drag-end="isDragging = false"></note-component>
+                    <selection-box ref="selectionBox" @select-notes="handleSelectNotes"></selection-box>
                 </g>
             </svg>
         </div>
