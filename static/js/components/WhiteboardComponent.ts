@@ -1,9 +1,77 @@
 /// <reference path="./vue-types.d.ts" />
+
+declare const vex: any; //TODO
+declare const uuid: any; //TODO
+
 import { changeNoteColor } from "./ColorChanger.js";
 import { editNoteText } from "./EditNote.js";
 import { loadValue, saveValue } from "./Api.js";
+
+interface Note {
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    text: string;
+    color?: string;
+    textColor?: string;
+    selected?: boolean;
+    isNoteDragging?: boolean;
+}
+
+interface SvgPoint {
+    x: number;
+    y: number;
+}
+
+interface SelectionBox {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+interface WhiteboardComponentData {
+    notes: Note[];
+    zoom: {
+        level: number;
+    };
+    pan: {
+        translateX: number;
+        translateY: number;
+    };
+    isDragging: boolean;
+    isDialogOpen: boolean;
+}
+
+type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
+    saveNotes(): Promise<void>;
+    loadNotes(): Promise<void>;
+    handleKeydown(event: KeyboardEvent): Promise<void>;
+    oneDialog(callback: () => Promise<any>): Promise<any>;
+    handleEditNote(): Promise<void>;
+    addNoteAt(event: MouseEvent): void;
+    screenToSvgPoint(clientX: number, clientY: number): SvgPoint;
+    updateNotePosition(note: Note, dx: number, dy: number): void;
+    handleSelectNotes(selectionBox: SelectionBox): void;
+    selectNoteHandler(selectedNote: Note): void;
+    handleNoteDragEnd(): void;
+    unselectAllNotes(): void;
+    deleteSelectedNotes(): void;
+    handleMouseDown(event: MouseEvent): void;
+    handleShiftMouseDown(event: MouseEvent): void;
+    handleMouseMove(event: MouseEvent): void;
+    handleMouseUp(event: MouseEvent): void;
+    $refs: {
+        whiteboard: HTMLDivElement;
+        svgContainer: SVGSVGElement;
+        selectionBox: any; // Adjust the type based on the actual type of selectionBox
+    };
+};
+
 Vue.component('whiteboard-component', {
-    data() {
+    data(): WhiteboardComponentData {
         return {
             notes: [],
             zoom: {
@@ -18,18 +86,19 @@ Vue.component('whiteboard-component', {
         };
     },
     computed: {
-        groupTransform() {
+        groupTransform(this: WhiteboardComponentInstance) {
             return `translate(${this.pan.translateX}, ${this.pan.translateY}) scale(${this.zoom.level})`;
         },
     },
     methods: {
-        async saveNotes() {
+        async saveNotes(this: WhiteboardComponentInstance) {
             console.log("save notes");
             await saveValue("notes", JSON.stringify(this.notes));
         },
-        async loadNotes() {
+
+        async loadNotes(this: WhiteboardComponentInstance) {
             const json = await loadValue("notes");
-            let notes = JSON.parse(json.value);
+            let notes: Note[] = JSON.parse(json.value);
             notes.forEach(note => {
                 if (!note.color) {
                     note.color = "yellow";
@@ -38,36 +107,32 @@ Vue.component('whiteboard-component', {
             });
             this.notes = notes;
         },
-        async handleKeydown(event) {
-            const target = event.target;
+
+        async handleKeydown(this: WhiteboardComponentInstance, event: KeyboardEvent) {
+            const target = event.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
                 return;
             }
+
             const zoomFactor = 0.1;
             if (event.key === '+' || event.key === '=') {
                 event.preventDefault();
                 this.zoom.level += zoomFactor;
-            }
-            else if (event.key === '-') {
+            } else if (event.key === '-') {
                 event.preventDefault();
                 this.zoom.level = Math.max(0.1, this.zoom.level - zoomFactor);
-            }
-            else if (event.key === 's') {
+            } else if (event.key === 's') {
                 event.preventDefault();
                 await this.saveNotes();
-            }
-            else if (event.key === 'l') {
+            } else if (event.key === 'l') {
                 event.preventDefault();
                 await this.loadNotes();
-            }
-            else if (event.key === 'd') {
+            } else if (event.key === 'd') {
                 event.preventDefault();
                 this.deleteSelectedNotes();
-            }
-            else if (event.key === 'Escape') {
+            } else if (event.key === 'Escape') {
                 this.unselectAllNotes();
-            }
-            else if (event.key === 'c') {
+            } else if (event.key === 'c') {
                 event.preventDefault();
                 const value = await this.oneDialog(changeNoteColor);
                 if (!value) {
@@ -79,25 +144,25 @@ Vue.component('whiteboard-component', {
                         note.textColor = value.textColor;
                     }
                 });
-            }
-            else if (event.key === 'e') {
+            } else if (event.key === 'e') {
                 event.preventDefault();
                 await this.oneDialog(this.handleEditNote);
             }
         },
-        async oneDialog(callback) {
+
+        async oneDialog(this: WhiteboardComponentInstance, callback: () => Promise<any>) {
             if (this.isDialogOpen) {
                 return;
             }
             this.isDialogOpen = true;
             try {
                 return await callback();
-            }
-            finally {
+            } finally {
                 this.isDialogOpen = false;
             }
         },
-        async handleEditNote() {
+
+        async handleEditNote(this: WhiteboardComponentInstance) {
             const selectedNotes = this.notes.filter(note => note.selected);
             if (selectedNotes.length !== 1) {
                 vex.dialog.alert({ message: 'Please select exactly one note to edit.' });
@@ -112,9 +177,10 @@ Vue.component('whiteboard-component', {
             note.text = newText;
             note.width = 11 * note.text.length + 10;
         },
-        addNoteAt(event) {
+
+        addNoteAt(this: WhiteboardComponentInstance, event: MouseEvent) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
-            const newNote = {
+            const newNote: Note = {
                 id: uuid.v4(),
                 text: 'New Note',
                 x: (svgPoint.x - this.pan.translateX) / this.zoom.level - 50,
@@ -127,14 +193,16 @@ Vue.component('whiteboard-component', {
             };
             this.notes.push(newNote);
         },
-        screenToSvgPoint(clientX, clientY) {
-            const svg = this.$refs.svgContainer;
+
+        screenToSvgPoint(this: WhiteboardComponentInstance, clientX: number, clientY: number): SvgPoint {
+            const svg = this.$refs.svgContainer as SVGSVGElement;
             const point = svg.createSVGPoint();
             point.x = clientX;
             point.y = clientY;
-            return point.matrixTransform(svg.getScreenCTM().inverse());
+            return point.matrixTransform(svg.getScreenCTM()!.inverse());
         },
-        updateNotePosition(note, dx, dy) {
+
+        updateNotePosition(this: WhiteboardComponentInstance, note: Note, dx: number, dy: number) {
             if (note.selected) {
                 this.notes.forEach(n => {
                     if (n.selected) {
@@ -142,72 +210,83 @@ Vue.component('whiteboard-component', {
                         n.y += dy / this.zoom.level;
                     }
                 });
-            }
-            else {
+            } else {
                 note.x += dx / this.zoom.level;
                 note.y += dy / this.zoom.level;
             }
         },
-        handleSelectNotes(selectionBox) {
+
+        handleSelectNotes(this: WhiteboardComponentInstance, selectionBox: SelectionBox) {
             this.notes.forEach(note => {
-                const selected = (note.x + note.width >= selectionBox.x &&
+                const selected = (
+                    note.x + note.width >= selectionBox.x &&
                     note.x <= selectionBox.x + selectionBox.width &&
                     note.y + note.height >= selectionBox.y &&
-                    note.y <= selectionBox.y + selectionBox.height);
+                    note.y <= selectionBox.y + selectionBox.height
+                );
                 if (selected) {
                     console.log("selected2", note.text);
                 }
                 note.selected = selected;
             });
         },
-        selectNoteHandler(selectedNote) {
+
+        selectNoteHandler(this: WhiteboardComponentInstance, selectedNote: Note) {
             this.notes.forEach(note => {
                 note.selected = note.id === selectedNote.id;
             });
         },
-        handleNoteDragEnd() {
+
+        handleNoteDragEnd(this: WhiteboardComponentInstance) {
             console.log("drag end");
             this.isDragging = false;
         },
-        unselectAllNotes() {
+
+        unselectAllNotes(this: WhiteboardComponentInstance) {
             this.notes.forEach(note => {
                 note.selected = false;
             });
         },
-        deleteSelectedNotes() {
+
+        deleteSelectedNotes(this: WhiteboardComponentInstance) {
             this.notes = this.notes.filter(note => !note.selected);
         },
-        handleMouseDown(event) {
+
+        handleMouseDown(this: WhiteboardComponentInstance, event: MouseEvent) {
             if (event.shiftKey) {
                 this.handleShiftMouseDown(event);
-            }
-            else {
+            } else {
                 // Normal mouse down behavior, possibly dragging notes
             }
         },
-        handleShiftMouseDown(event) {
+
+        handleShiftMouseDown(this: WhiteboardComponentInstance, event: MouseEvent) {
             if (event.shiftKey) {
                 event.preventDefault();
                 this.$refs.selectionBox.startSelection(event);
             }
         },
-        handleMouseMove(event) {
+
+        handleMouseMove(this: WhiteboardComponentInstance, event: MouseEvent) {
             if (this.$refs.selectionBox.isActive) {
                 this.$refs.selectionBox.updateSelection(event);
             }
         },
-        handleMouseUp(event) {
+
+        handleMouseUp(this: WhiteboardComponentInstance, event: MouseEvent) {
             if (this.$refs.selectionBox.isActive) {
                 this.$refs.selectionBox.endSelection(event);
             }
         }
     },
-    mounted() {
+
+    mounted(this: WhiteboardComponentInstance) {
         this.$refs.whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);
+
         interact(this.$refs.svgContainer).draggable({
             listeners: {
-                move: (event) => {
+                move: (event: any) => {
                     if (event.shiftKey) {
                         return; // Skip panning if shift key is pressed
                     }
@@ -220,11 +299,14 @@ Vue.component('whiteboard-component', {
                 }
             }
         });
+
         this.loadNotes();
     },
-    beforeDestroy() {
+
+    beforeDestroy(this: WhiteboardComponentInstance) {
         window.removeEventListener('keydown', this.handleKeydown);
     },
+
     template: `
         <div ref="whiteboard" class="whiteboard" 
              :style="{ cursor: isDragging ? 'grabbing' : 'default' }" 
