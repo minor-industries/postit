@@ -146,7 +146,7 @@ Vue.component('whiteboard-component', {
                 const note = selectedNotes[0];
                 editNoteText(note).then((newText) => {
                     note.text = newText;
-                    this.adjustTextSize(note);
+                    note.width = 10 * note.text.length + 10;
                 });
             }
         },
