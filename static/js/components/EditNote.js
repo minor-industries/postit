@@ -1,9 +1,11 @@
-export function editNoteText(note) {
+export function editNoteText(note, useTextarea = false) {
     return new Promise((resolve) => {
         const inputId = 'vex-input-note-text';
+        const inputType = useTextarea ? 'textarea' : 'input';
+        const inputValue = useTextarea ? note.text : `value="${note.text}"`;
         const dialog = vex.dialog.open({
             message: 'Edit Note Text',
-            input: `<input type="text" id="${inputId}" name="noteText" class="vex-dialog-prompt-input" value="${note.text}" />`,
+            input: `<${inputType} id="${inputId}" name="noteText" class="vex-dialog-prompt-input" ${inputValue}></${inputType}>`,
             buttons: [
                 {
                     text: 'OK',

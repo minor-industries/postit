@@ -4,13 +4,15 @@ interface Note {
     text: string;
 }
 
-export function editNoteText(note: Note): Promise<string | null> {
+export function editNoteText(note: Note, useTextarea: boolean = false): Promise<string | null> {
     return new Promise<string | null>((resolve) => {
         const inputId = 'vex-input-note-text';
+        const inputType = useTextarea ? 'textarea' : 'input';
+        const inputValue = useTextarea ? note.text : `value="${note.text}"`;
 
         const dialog = vex.dialog.open({
             message: 'Edit Note Text',
-            input: `<input type="text" id="${inputId}" name="noteText" class="vex-dialog-prompt-input" value="${note.text}" />`,
+            input: `<${inputType} id="${inputId}" name="noteText" class="vex-dialog-prompt-input" ${inputValue}></${inputType}>`,
             buttons: [
                 {
                     text: 'OK',
