@@ -14,23 +14,23 @@ export function changeNoteColor() {
         { color: 'blanchedalmond', label: 'Blanched Almond', textColor: 'black' }
     ];
 
-    const colorHtml = colorButtons.map(button => `
-        <button style="background-color: ${button.color}; color: ${button.textColor}; padding: 10px; margin: 5px;" onclick="changeColor('${button.color}', '${button.textColor}')">
-            ${button.label}
-        </button>
-    `).join('');
-
     return new Promise((resolve) => {
-        swal({
-            title: 'Select a color',
-            html: true,
-            text: colorHtml,
-            buttons: false
+        const colorHtml = colorButtons.map(button => `
+            <button class="vex-dialog-button" style="background-color: ${button.color}; color: ${button.textColor};" onclick="selectColor('${button.color}', '${button.textColor}')">
+                ${button.label}
+            </button>
+        `).join('');
+
+        vex.dialog.open({
+            message: 'Select a color',
+            input: colorHtml,
+            buttons: [],
+            callback: () => {}
         });
 
-        window.changeColor = (color, textColor) => {
+        window.selectColor = (color, textColor) => {
             resolve({ color, textColor });
-            swal.close();
+            vex.closeAll();  // Close all vex dialogs
         };
     });
 }
