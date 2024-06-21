@@ -1,4 +1,4 @@
-declare const vex: any;
+declare const vex: any; //TODO
 
 export async function changeNoteColor(): Promise<{ color: string; textColor: string } | null> {
     interface ColorButton {
