@@ -1,6 +1,6 @@
+"use strict";
 /// <reference path="./vue-types.d.ts" />
-export default Vue.extend({
-    name: 'SelectionBox',
+Vue.component('selection-box', {
     data() {
         return {
             startX: 0,
