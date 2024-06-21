@@ -1,3 +1,5 @@
+import {showNotification} from "./Util.js";
+
 interface SaveValueResponse {
     success: boolean;
 }
@@ -27,6 +29,7 @@ export async function saveValue(key: string, value: string): Promise<SaveValueRe
     }
 
     const responseData: SaveValueResponse = await response.json();
+    showNotification('success', 'notes saved');
     return responseData;
 }
 

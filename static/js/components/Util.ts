@@ -28,3 +28,19 @@ export function nearbyColor(x: number, y: number, notes: Note[], defaultColor: s
 
     return maxColor;
 }
+
+declare const Notyf: any; //TODO
+export function showNotification(type: 'success' | 'error', message: string) {
+    switch (type) {
+        case "success":
+            new Notyf().success(message);
+            return;
+        case "error":
+            new Notyf().error(message);
+            return;
+        default:
+            new Notyf().error("unknown alert type");
+            return;
+    }
+}
+

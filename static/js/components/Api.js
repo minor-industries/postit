@@ -1,3 +1,4 @@
+import { showNotification } from "./Util.js";
 export async function saveValue(key, value) {
     const url = '/twirp/kv.KVService/SaveValue';
     const data = {
@@ -15,6 +16,7 @@ export async function saveValue(key, value) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
     const responseData = await response.json();
+    showNotification('success', 'notes saved');
     return responseData;
 }
 export async function loadValue(key) {
