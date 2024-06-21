@@ -1,4 +1,5 @@
 /// <reference path="./vue-types.d.ts" />
+import { nearbyColor } from "./Util.js";
 import { changeNoteColor } from "./ColorChanger.js";
 import { editNoteText } from "./EditNote.js";
 import { loadValue, saveValue } from "./Api.js";
@@ -118,16 +119,22 @@ Vue.component('whiteboard-component', {
                 return;
             }
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
+            // Adjust the coordinates based on pan and zoom
+            const adjustedX = (svgPoint.x - this.pan.translateX) / this.zoom.level;
+            const adjustedY = (svgPoint.y - this.pan.translateY) / this.zoom.level;
+            // Determine the initial color based on nearby notes
+            const initialColor = nearbyColor(adjustedX, adjustedY, this.notes, 'yellow');
             const newNote = {
                 id: uuid.v4(),
                 text: newText,
-                x: (svgPoint.x - this.pan.translateX) / this.zoom.level - 50,
-                y: (svgPoint.y - this.pan.translateY) / this.zoom.level - 25,
+                x: adjustedX - 50,
+                y: adjustedY - 25,
                 width: 11 * newText.length + 10,
                 height: 50,
                 selected: false,
                 isNoteDragging: false,
-                color: "yellow",
+                color: initialColor,
+                textColor: "black"
             };
             this.notes.push(newNote);
         },
@@ -156,6 +163,16 @@ Vue.component('whiteboard-component', {
                 this.notes.push(newNote);
                 currentY += 60;
             });
+        },
+        async handleDoubleClick(event) {
+            if (event.shiftKey) {
+                console.log("yes");
+                await this.addMulti(event);
+            }
+            else {
+                console.log("no");
+                await this.addNoteAt(event);
+            }
         },
         screenToSvgPoint(clientX, clientY) {
             const svg = this.$refs.svgContainer;
@@ -259,7 +276,7 @@ Vue.component('whiteboard-component', {
         <div ref="whiteboard" class="whiteboard" 
              :style="{ cursor: isDragging ? 'grabbing' : 'default' }" 
              tabindex="0" 
-             @dblclick="addMulti"
+             @dblclick="handleDoubleClick"
              @mousedown="handleMouseDown">
             <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg"
                 @mousemove="handleMouseMove" @mouseup="handleMouseUp">

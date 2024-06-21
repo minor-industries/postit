@@ -1,11 +1,12 @@
 /// <reference path="./vue-types.d.ts" />
 
-declare const vex: any; //TODO
-declare const uuid: any; //TODO
-
+import {nearbyColor} from "./Util.js";
 import {changeNoteColor} from "./ColorChanger.js";
 import {editNoteText} from "./EditNote.js";
 import {loadValue, saveValue} from "./Api.js";
+
+declare const vex: any; //TODO
+declare const uuid: any; //TODO
 
 interface Note {
     id: string;
@@ -52,6 +53,7 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     oneDialog(callback: () => Promise<any>): Promise<any>;
     handleEditNote(): Promise<void>;
     addNoteAt(event: MouseEvent): void;
+    addMulti(event: MouseEvent): void;
     screenToSvgPoint(clientX: number, clientY: number): SvgPoint;
     updateNotePosition(note: Note, dx: number, dy: number): void;
     handleSelectNotes(selectionBox: SelectionBox): void;
@@ -184,16 +186,25 @@ Vue.component('whiteboard-component', {
                 return;
             }
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
+
+            // Adjust the coordinates based on pan and zoom
+            const adjustedX = (svgPoint.x - this.pan.translateX) / this.zoom.level;
+            const adjustedY = (svgPoint.y - this.pan.translateY) / this.zoom.level;
+
+            // Determine the initial color based on nearby notes
+            const initialColor = nearbyColor(adjustedX, adjustedY, this.notes, 'yellow');
+
             const newNote: Note = {
                 id: uuid.v4(),
                 text: newText,
-                x: (svgPoint.x - this.pan.translateX) / this.zoom.level - 50,
-                y: (svgPoint.y - this.pan.translateY) / this.zoom.level - 25,
+                x: adjustedX - 50,
+                y: adjustedY - 25,
                 width: 11 * newText.length + 10,
                 height: 50,
                 selected: false,
                 isNoteDragging: false,
-                color: "yellow",
+                color: initialColor,
+                textColor: "black"
             };
             this.notes.push(newNote);
         },
@@ -227,6 +238,14 @@ Vue.component('whiteboard-component', {
                 this.notes.push(newNote);
                 currentY += 60
             });
+        },
+
+        async handleDoubleClick(this: WhiteboardComponentInstance, event: MouseEvent) {
+            if (event.shiftKey) {
+                await this.addMulti(event);
+            } else {
+                await this.addNoteAt(event);
+            }
         },
 
         screenToSvgPoint(this: WhiteboardComponentInstance, clientX: number, clientY: number): SvgPoint {
@@ -346,7 +365,7 @@ Vue.component('whiteboard-component', {
         <div ref="whiteboard" class="whiteboard" 
              :style="{ cursor: isDragging ? 'grabbing' : 'default' }" 
              tabindex="0" 
-             @dblclick="addMulti"
+             @dblclick="handleDoubleClick"
              @mousedown="handleMouseDown">
             <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg"
                 @mousemove="handleMouseMove" @mouseup="handleMouseUp">
