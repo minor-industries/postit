@@ -62,6 +62,7 @@ Vue.component('whiteboard-component', {
                 translateY: 0,
             },
             isDragging: false,
+            isDialogOpen: false,
         };
     },
     computed: {
@@ -71,6 +72,7 @@ Vue.component('whiteboard-component', {
     },
     methods: {
         async saveNotes() {
+            console.log("save notes");
             await saveValue("notes", JSON.stringify(this.notes));
         },
 
@@ -107,25 +109,33 @@ Vue.component('whiteboard-component', {
         },
 
         async handleKeydown(event) {
+            const target = event.target;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+                return;
+            }
+
             const zoomFactor = 0.1;
             if (event.key === '+' || event.key === '=') {
+                event.preventDefault();
                 this.zoom.level += zoomFactor;
             } else if (event.key === '-') {
+                event.preventDefault();
                 this.zoom.level = Math.max(0.1, this.zoom.level - zoomFactor);
             } else if (event.key === 's') {
-                this.saveNotes();
+                event.preventDefault();
+                await this.saveNotes();
             } else if (event.key === 'l') {
+                event.preventDefault();
                 await this.loadNotes();
             } else if (event.key === 'd') {
+                event.preventDefault();
                 this.deleteSelectedNotes();
             } else if (event.key === 'Escape') {
                 this.unselectAllNotes();
             } else if (event.key === 'c') {
-                const value = await changeNoteColor();
-                if (value === null) {
-                    console.log("no color selected");
-                    return;
-                }
+                event.preventDefault();
+                const value = await this.oneDialog(changeNoteColor);
+                if (!value) return;
                 this.notes.forEach(note => {
                     if (note.selected) {
                         note.color = value.color;
@@ -133,21 +143,29 @@ Vue.component('whiteboard-component', {
                     }
                 })
             } else if (event.key === 'e') {
-                this.handleEditNote();
+                event.preventDefault();
+                await this.oneDialog(this.handleEditNote);
+            }
+        },
+
+        async oneDialog(callback) {
+            if (this.isDialogOpen) return;
+            this.isDialogOpen = true;
+            try {
+                return await callback();
+            } finally {
+                this.isDialogOpen = false;
             }
         },
 
         handleEditNote() {
             const selectedNotes = this.notes.filter(note => note.selected);
             if (selectedNotes.length !== 1) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Please select exactly one note to edit.',
-                });
+                vex.dialog.alert({message: 'Please select exactly one note to edit.'});
             } else {
                 const note = selectedNotes[0];
                 editNoteText(note).then((newText) => {
+                    if (newText === null) return
                     note.text = newText;
                     note.width = 10 * note.text.length + 10;
                 });
