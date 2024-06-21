@@ -69,7 +69,9 @@ Vue.component('whiteboard-component', {
             } else if (event.key === 'c') {
                 event.preventDefault();
                 const value = await this.oneDialog(changeNoteColor);
-                if (!value) return;
+                if (!value) {
+                    return;
+                }
                 this.notes.forEach(note => {
                     if (note.selected) {
                         note.color = value.color;
@@ -83,7 +85,9 @@ Vue.component('whiteboard-component', {
         },
 
         async oneDialog(callback) {
-            if (this.isDialogOpen) return;
+            if (this.isDialogOpen) {
+                return;
+            }
             this.isDialogOpen = true;
             try {
                 return await callback();
@@ -99,9 +103,12 @@ Vue.component('whiteboard-component', {
             } else {
                 const note = selectedNotes[0];
                 editNoteText(note).then((newText) => {
-                    if (newText === null) return
+                    console.log(newText)
+                    if (newText === null) {
+                        return;
+                    }
                     note.text = newText;
-                    note.width = 10 * note.text.length + 10;
+                    note.width = 11 * note.text.length + 10;
                 });
             }
         },
