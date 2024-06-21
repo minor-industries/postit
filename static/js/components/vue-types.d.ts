@@ -4,3 +4,7 @@ declare const Vue: {
     component: (name: string, options: any) => void;
     prototype: any;
 };
+
+interface Vue {
+    $emit(event: string, ...args: any[]): void;
+}

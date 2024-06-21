@@ -1,9 +1,52 @@
-"use strict";
 /// <reference path="./vue-types.d.ts" />
+
+declare const interact: any;
+
+interface SvgPoint {
+    x: number;
+    y: number;
+}
+
+interface Box {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+interface Note {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    text: string;
+    color?: string;
+    textColor?: string;
+    selected?: boolean;
+    isNoteDragging?: boolean;
+}
+
+interface NoteComponentProps {
+    note: Note;
+}
+
+type NoteComponentInstance = Vue & NoteComponentProps & {
+    noteStyle: object;
+    textStyle: object;
+    selectNote(): void;
+    $el: HTMLElement;
+};
+
+interface InteractEvent {
+    shiftKey: boolean;
+    dx: number;
+    dy: number;
+}
+
 Vue.component('note-component', {
     props: ['note'],
     computed: {
-        noteStyle() {
+        noteStyle(this: NoteComponentInstance) {
             const regularColor = this.note.color || "yellow";
             return {
                 fill: this.note.selected ? 'lightblue' : regularColor,
@@ -11,14 +54,14 @@ Vue.component('note-component', {
                 strokeWidth: this.note.selected ? 2 : 1
             };
         },
-        textStyle() {
+        textStyle(this: NoteComponentInstance) {
             return {
                 fill: this.note.textColor || 'black'
             };
         }
     },
     methods: {
-        selectNote() {
+        selectNote(this: NoteComponentInstance) {
             if (!this.note.isNoteDragging) {
                 this.$emit('select-note', this.note);
             }
@@ -32,23 +75,23 @@ Vue.component('note-component', {
             </text>
         </g>
     `,
-    mounted() {
+    mounted(this: NoteComponentInstance) {
         interact(this.$el).draggable({
             listeners: {
-                start: (event) => {
+                start: (event: InteractEvent) => {
                     if (event.shiftKey) {
                         return;
                     }
                     this.note.isNoteDragging = true;
                     this.$emit('drag-start', this.note.selected);
                 },
-                move: (event) => {
+                move: (event: InteractEvent) => {
                     if (event.shiftKey) {
                         return;
                     }
                     this.$emit('drag-move', { dx: event.dx, dy: event.dy });
                 },
-                end: (event) => {
+                end: (event: InteractEvent) => {
                     if (event.shiftKey) {
                         return;
                     }
