@@ -8,18 +8,8 @@ export function editNoteText(note) {
             buttons: [
                 {
                     text: 'OK',
-                    type: 'button',
-                    className: 'vex-dialog-button-primary',
-                    click: function () {
-                        const inputElement = document.getElementById(inputId);
-                        if (inputElement && inputElement.value) {
-                            resolve(inputElement.value);
-                            dialog.close(); // Close the dialog
-                        } else {
-                            // Show validation error
-                            vex.dialog.alert('You need to write something!');
-                        }
-                    }
+                    type: 'submit',
+                    className: 'vex-dialog-button-primary'
                 },
                 {
                     text: 'Cancel',
@@ -27,11 +17,17 @@ export function editNoteText(note) {
                     className: 'vex-dialog-button-secondary',
                     click: function () {
                         resolve(null);
-                        dialog.close(); // Close the dialog
+                        vex.close(dialog);
                     }
                 }
-            ]
+            ],
+            callback: (data) => {
+                if (data && data.noteText) {
+                    resolve(data.noteText);
+                } else {
+                    resolve(null);
+                }
+            }
         });
     });
 }
-

@@ -96,21 +96,20 @@ Vue.component('whiteboard-component', {
             }
         },
 
-        handleEditNote() {
+        async handleEditNote() {
             const selectedNotes = this.notes.filter(note => note.selected);
             if (selectedNotes.length !== 1) {
                 vex.dialog.alert({message: 'Please select exactly one note to edit.'});
-            } else {
-                const note = selectedNotes[0];
-                editNoteText(note).then((newText) => {
-                    console.log(newText)
-                    if (newText === null) {
-                        return;
-                    }
-                    note.text = newText;
-                    note.width = 11 * note.text.length + 10;
-                });
+                return;
             }
+            const note = selectedNotes[0];
+            const newText = await editNoteText(note);
+            console.log(newText);
+            if (newText === null) {
+                return;
+            }
+            note.text = newText;
+            note.width = 11 * note.text.length + 10;
         },
 
         addNoteAt(event) {
