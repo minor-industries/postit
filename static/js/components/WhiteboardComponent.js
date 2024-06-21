@@ -121,7 +121,11 @@ Vue.component('whiteboard-component', {
             } else if (event.key === 'Escape') {
                 this.unselectAllNotes();
             } else if (event.key === 'c') {
-                const value = await changeNoteColor()
+                const value = await changeNoteColor();
+                if (value === null) {
+                    console.log("no color selected");
+                    return;
+                }
                 this.notes.forEach(note => {
                     if (note.selected) {
                         note.color = value.color;
