@@ -178,14 +178,18 @@ Vue.component('whiteboard-component', {
             note.width = 11 * note.text.length + 10;
         },
 
-        addNoteAt(this: WhiteboardComponentInstance, event: MouseEvent) {
+        async addNoteAt(this: WhiteboardComponentInstance, event: MouseEvent) {
+            const newText = await editNoteText({ text: '' } as Note);
+            if (!newText) {
+                return;
+            }
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
             const newNote: Note = {
                 id: uuid.v4(),
-                text: 'New Note',
+                text: newText,
                 x: (svgPoint.x - this.pan.translateX) / this.zoom.level - 50,
                 y: (svgPoint.y - this.pan.translateY) / this.zoom.level - 25,
-                width: 100,
+                width: 11 * newText.length + 10,
                 height: 50,
                 selected: false,
                 isNoteDragging: false,
