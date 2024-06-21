@@ -1,9 +1,19 @@
-export async function saveValue(key, value) {
+interface SaveValueResponse {
+    success: boolean;
+}
+
+interface LoadValueResponse {
+    value: string;
+}
+
+export async function saveValue(key: string, value: string): Promise<SaveValueResponse> {
     const url = '/twirp/kv.KVService/SaveValue';
+
     const data = {
         key: key,
         value: value
     };
+
     const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -11,17 +21,22 @@ export async function saveValue(key, value) {
         },
         body: JSON.stringify(data),
     });
+
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const responseData = await response.json();
+
+    const responseData: SaveValueResponse = await response.json();
     return responseData;
 }
-export async function loadValue(key) {
+
+export async function loadValue(key: string): Promise<LoadValueResponse> {
     const url = '/twirp/kv.KVService/LoadValue';
+
     const data = {
         key: key
     };
+
     const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -29,9 +44,11 @@ export async function loadValue(key) {
         },
         body: JSON.stringify(data),
     });
+
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const responseData = await response.json();
+
+    const responseData: LoadValueResponse = await response.json();
     return responseData;
 }
