@@ -3,9 +3,9 @@
 declare const vex: any; //TODO
 declare const uuid: any; //TODO
 
-import { changeNoteColor } from "./ColorChanger.js";
-import { editNoteText } from "./EditNote.js";
-import { loadValue, saveValue } from "./Api.js";
+import {changeNoteColor} from "./ColorChanger.js";
+import {editNoteText} from "./EditNote.js";
+import {loadValue, saveValue} from "./Api.js";
 
 interface Note {
     id: string;
@@ -165,7 +165,7 @@ Vue.component('whiteboard-component', {
         async handleEditNote(this: WhiteboardComponentInstance) {
             const selectedNotes = this.notes.filter(note => note.selected);
             if (selectedNotes.length !== 1) {
-                vex.dialog.alert({ message: 'Please select exactly one note to edit.' });
+                vex.dialog.alert({message: 'Please select exactly one note to edit.'});
                 return;
             }
             const note = selectedNotes[0];
@@ -179,7 +179,7 @@ Vue.component('whiteboard-component', {
         },
 
         async addNoteAt(this: WhiteboardComponentInstance, event: MouseEvent) {
-            const newText = await editNoteText({ text: '' } as Note);
+            const newText = await editNoteText({text: ''} as Note);
             if (!newText) {
                 return;
             }
@@ -200,21 +200,22 @@ Vue.component('whiteboard-component', {
 
         async addMulti(this: WhiteboardComponentInstance, event: MouseEvent) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
-            const newText = await editNoteText({ text: '' }, true); // Use textarea
+            const newText = await editNoteText({text: ''}, true); // Use textarea
 
             if (newText === null) {
                 return;
             }
 
             const lines = newText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            let currentY = svgPoint.y;
+            let currentY = (svgPoint.y - this.pan.translateY) / this.zoom.level;
+            let x = (svgPoint.x - this.pan.translateX) / this.zoom.level - 50;
 
             lines.forEach((line, index) => {
                 const newNote: Note = {
                     id: uuid.v4(),
                     text: line,
-                    x: (svgPoint.x - this.pan.translateX) / this.zoom.level - 50,
-                    y: (currentY - this.pan.translateY) / this.zoom.level,
+                    x: x,
+                    y: currentY,
                     width: 11 * line.length + 10,
                     height: 50,
                     selected: false,
@@ -224,7 +225,7 @@ Vue.component('whiteboard-component', {
                 };
 
                 this.notes.push(newNote);
-                currentY += 60; // Adjust the value as needed to space out the notes
+                currentY += 60
             });
         },
 

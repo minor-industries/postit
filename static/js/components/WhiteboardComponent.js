@@ -138,13 +138,14 @@ Vue.component('whiteboard-component', {
                 return;
             }
             const lines = newText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            let currentY = svgPoint.y;
+            let currentY = (svgPoint.y - this.pan.translateY) / this.zoom.level;
+            let x = (svgPoint.x - this.pan.translateX) / this.zoom.level - 50;
             lines.forEach((line, index) => {
                 const newNote = {
                     id: uuid.v4(),
                     text: line,
-                    x: (svgPoint.x - this.pan.translateX) / this.zoom.level - 50,
-                    y: (currentY - this.pan.translateY) / this.zoom.level,
+                    x: x,
+                    y: currentY,
                     width: 11 * line.length + 10,
                     height: 50,
                     selected: false,
@@ -153,7 +154,7 @@ Vue.component('whiteboard-component', {
                     textColor: "black"
                 };
                 this.notes.push(newNote);
-                currentY += 60; // Adjust the value as needed to space out the notes
+                currentY += 60;
             });
         },
         screenToSvgPoint(clientX, clientY) {
