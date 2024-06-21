@@ -1,53 +1,6 @@
-import {notes} from "./seed.js"
 import {changeNoteColor} from "./ColorChanger.js";
 import {editNoteText} from "./EditNote.js";
-
-async function saveValue(key, value) {
-    const url = '/twirp/kv.KVService/SaveValue';
-
-    const data = {
-        key: key,
-        value: value
-    };
-
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const responseData = await response.json();
-    return responseData;
-}
-
-async function loadValue(key) {
-    const url = '/twirp/kv.KVService/LoadValue';
-
-    const data = {
-        key: key
-    };
-
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const responseData = await response.json();
-    return responseData;
-}
+import {loadValue, saveValue} from "./Api.js";
 
 
 Vue.component('whiteboard-component', {
@@ -87,25 +40,6 @@ Vue.component('whiteboard-component', {
             })
 
             this.notes = notes;
-        },
-
-        seedNotes() {
-            this.notes = [];
-            let y = 0
-            notes.forEach(note => {
-                this.notes.push({
-                    id: uuid.v4(),
-                    text: note,
-                    x: 10,
-                    y: y += 55,
-                    width: 10 * note.length + 10,
-                    height: 50,
-                    selected: false,
-                    isNoteDragging: false,
-                    color: "yellow",
-                    textColor: "black",
-                });
-            });
         },
 
         async handleKeydown(event) {
@@ -187,6 +121,7 @@ Vue.component('whiteboard-component', {
             };
             this.notes.push(newNote);
         },
+
         screenToSvgPoint(clientX, clientY) {
             const svg = this.$refs.svgContainer;
             const point = svg.createSVGPoint();
@@ -194,6 +129,7 @@ Vue.component('whiteboard-component', {
             point.y = clientY;
             return point.matrixTransform(svg.getScreenCTM().inverse());
         },
+
         updateNotePosition(note, dx, dy) {
             if (note.selected) {
                 this.notes.forEach(n => {
@@ -207,6 +143,7 @@ Vue.component('whiteboard-component', {
                 note.y += dy / this.zoom.level;
             }
         },
+
         handleSelectNotes(selectionBox) {
             this.notes.forEach(note => {
                 const selected = (
@@ -221,23 +158,28 @@ Vue.component('whiteboard-component', {
                 note.selected = selected;
             });
         },
+
         selectNoteHandler(selectedNote) {
             this.notes.forEach(note => {
                 note.selected = note.id === selectedNote.id;
             });
         },
+
         handleNoteDragEnd() {
             console.log("drag end");
             this.isDragging = false;
         },
+
         unselectAllNotes() {
             this.notes.forEach(note => {
                 note.selected = false;
             });
         },
+
         deleteSelectedNotes() {
             this.notes = this.notes.filter(note => !note.selected);
         },
+
         handleMouseDown(event) {
             if (event.shiftKey) {
                 this.handleShiftMouseDown(event);
@@ -245,23 +187,27 @@ Vue.component('whiteboard-component', {
                 // Normal mouse down behavior, possibly dragging notes
             }
         },
+
         handleShiftMouseDown(event) {
             if (event.shiftKey) {
                 event.preventDefault();
                 this.$refs.selectionBox.startSelection(event);
             }
         },
+
         handleMouseMove(event) {
             if (this.$refs.selectionBox.isActive) {
                 this.$refs.selectionBox.updateSelection(event);
             }
         },
+
         handleMouseUp(event) {
             if (this.$refs.selectionBox.isActive) {
                 this.$refs.selectionBox.endSelection(event);
             }
         }
     },
+
     mounted() {
         this.$refs.whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);
@@ -284,9 +230,11 @@ Vue.component('whiteboard-component', {
 
         this.loadNotes();
     },
+
     beforeDestroy() {
         window.removeEventListener('keydown', this.handleKeydown);
     },
+
     template: `
         <div ref="whiteboard" class="whiteboard" 
              :style="{ cursor: isDragging ? 'grabbing' : 'default' }" 
