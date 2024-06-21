@@ -1,4 +1,5 @@
-Vue.component('selection-box', {
+export default Vue.extend({
+    name: 'SelectionBox',
     data() {
         return {
             startX: 0,
@@ -27,13 +28,15 @@ Vue.component('selection-box', {
             this.endY = this.startY;
         },
         updateSelection(event) {
-            if (!this.isActive) return;
+            if (!this.isActive)
+                return;
             const svgPoint = this.$parent.screenToSvgPoint(event.clientX, event.clientY);
             this.endX = (svgPoint.x - this.$parent.pan.translateX) / this.$parent.zoom.level;
             this.endY = (svgPoint.y - this.$parent.pan.translateY) / this.$parent.zoom.level;
         },
         endSelection(event) {
-            if (!this.isActive) return;
+            if (!this.isActive)
+                return;
             this.isActive = false;
             this.$emit('select-notes', this.box);
         }
