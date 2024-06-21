@@ -4,6 +4,7 @@ import {nearbyColor} from "./Util.js";
 import {changeNoteColor} from "./ColorChanger.js";
 import {editNoteText} from "./EditNote.js";
 import {loadValue, saveValue} from "./Api.js";
+import {getTextColorForBackground} from "./Colors.js";
 
 declare const vex: any; //TODO
 declare const uuid: any; //TODO
@@ -193,6 +194,7 @@ Vue.component('whiteboard-component', {
 
             // Determine the initial color based on nearby notes
             const initialColor = nearbyColor(adjustedX, adjustedY, this.notes, 'yellow');
+            const textColor = getTextColorForBackground(initialColor);
 
             const newNote: Note = {
                 id: uuid.v4(),
@@ -204,7 +206,7 @@ Vue.component('whiteboard-component', {
                 selected: false,
                 isNoteDragging: false,
                 color: initialColor,
-                textColor: "black"
+                textColor: textColor
             };
             this.notes.push(newNote);
         },

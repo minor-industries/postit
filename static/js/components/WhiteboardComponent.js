@@ -3,6 +3,7 @@ import { nearbyColor } from "./Util.js";
 import { changeNoteColor } from "./ColorChanger.js";
 import { editNoteText } from "./EditNote.js";
 import { loadValue, saveValue } from "./Api.js";
+import { getTextColorForBackground } from "./Colors.js";
 Vue.component('whiteboard-component', {
     data() {
         return {
@@ -124,6 +125,7 @@ Vue.component('whiteboard-component', {
             const adjustedY = (svgPoint.y - this.pan.translateY) / this.zoom.level;
             // Determine the initial color based on nearby notes
             const initialColor = nearbyColor(adjustedX, adjustedY, this.notes, 'yellow');
+            const textColor = getTextColorForBackground(initialColor);
             const newNote = {
                 id: uuid.v4(),
                 text: newText,
@@ -134,7 +136,7 @@ Vue.component('whiteboard-component', {
                 selected: false,
                 isNoteDragging: false,
                 color: initialColor,
-                textColor: "black"
+                textColor: textColor
             };
             this.notes.push(newNote);
         },
@@ -166,11 +168,9 @@ Vue.component('whiteboard-component', {
         },
         async handleDoubleClick(event) {
             if (event.shiftKey) {
-                console.log("yes");
                 await this.addMulti(event);
             }
             else {
-                console.log("no");
                 await this.addNoteAt(event);
             }
         },
