@@ -70,8 +70,8 @@ Vue.component('whiteboard-component', {
         },
     },
     methods: {
-        saveNotes() {
-            saveValue("notes", JSON.stringify(this.notes));
+        async saveNotes() {
+            await saveValue("notes", JSON.stringify(this.notes));
         },
 
         async loadNotes() {
@@ -106,7 +106,7 @@ Vue.component('whiteboard-component', {
             });
         },
 
-        handleKeydown(event) {
+        async handleKeydown(event) {
             const zoomFactor = 0.1;
             if (event.key === '+' || event.key === '=') {
                 this.zoom.level += zoomFactor;
@@ -115,19 +115,18 @@ Vue.component('whiteboard-component', {
             } else if (event.key === 's') {
                 this.saveNotes();
             } else if (event.key === 'l') {
-                this.loadNotes();
+                await this.loadNotes();
             } else if (event.key === 'd') {
                 this.deleteSelectedNotes();
             } else if (event.key === 'Escape') {
                 this.unselectAllNotes();
             } else if (event.key === 'c') {
-                changeNoteColor().then(value => {
-                    this.notes.forEach(note => {
-                        if (note.selected) {
-                            note.color = value.color;
-                            note.textColor = value.textColor;
-                        }
-                    });
+                const value = await changeNoteColor()
+                this.notes.forEach(note => {
+                    if (note.selected) {
+                        note.color = value.color;
+                        note.textColor = value.textColor;
+                    }
                 })
             } else if (event.key === 'e') {
                 this.handleEditNote();

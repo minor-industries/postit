@@ -1,4 +1,4 @@
-export function changeNoteColor() {
+export async function changeNoteColor() {
     const colorButtons = [
         { color: 'darkslategray', label: 'Dark Slate Gray', textColor: 'white' },
         { color: 'saddlebrown', label: 'Saddle Brown', textColor: 'white' },
@@ -16,21 +16,28 @@ export function changeNoteColor() {
 
     return new Promise((resolve) => {
         const colorHtml = colorButtons.map(button => `
-            <button class="vex-dialog-button" style="background-color: ${button.color}; color: ${button.textColor};" onclick="selectColor('${button.color}', '${button.textColor}')">
+            <button class="vex-dialog-button" style="background-color: ${button.color}; color: ${button.textColor};" data-color="${button.color}" data-textcolor="${button.textColor}">
                 ${button.label}
             </button>
         `).join('');
 
-        vex.dialog.open({
+        const dialog = vex.dialog.open({
             message: 'Select a color',
             input: colorHtml,
             buttons: [],
-            callback: () => {}
+            callback: () => {
+                resolve(null); // Resolve with null if dialog is dismissed
+            }
         });
 
-        window.selectColor = (color, textColor) => {
-            resolve({ color, textColor });
-            vex.closeAll();  // Close all vex dialogs
-        };
+        document.querySelectorAll('.vex-dialog-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const selectedButton = event.currentTarget;
+                const color = selectedButton.getAttribute('data-color');
+                const textColor = selectedButton.getAttribute('data-textcolor');
+                resolve({ color, textColor });
+                dialog.close();  // Close the dialog
+            });
+        });
     });
 }
