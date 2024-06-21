@@ -131,6 +131,31 @@ Vue.component('whiteboard-component', {
             };
             this.notes.push(newNote);
         },
+        async addMulti(event) {
+            const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
+            const newText = await editNoteText({ text: '' }, true); // Use textarea
+            if (newText === null) {
+                return;
+            }
+            const lines = newText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            let currentY = svgPoint.y;
+            lines.forEach((line, index) => {
+                const newNote = {
+                    id: uuid.v4(),
+                    text: line,
+                    x: (svgPoint.x - this.pan.translateX) / this.zoom.level - 50,
+                    y: (currentY - this.pan.translateY) / this.zoom.level,
+                    width: 11 * line.length + 10,
+                    height: 50,
+                    selected: false,
+                    isNoteDragging: false,
+                    color: "yellow",
+                    textColor: "black"
+                };
+                this.notes.push(newNote);
+                currentY += 60; // Adjust the value as needed to space out the notes
+            });
+        },
         screenToSvgPoint(clientX, clientY) {
             const svg = this.$refs.svgContainer;
             const point = svg.createSVGPoint();
@@ -233,7 +258,7 @@ Vue.component('whiteboard-component', {
         <div ref="whiteboard" class="whiteboard" 
              :style="{ cursor: isDragging ? 'grabbing' : 'default' }" 
              tabindex="0" 
-             @dblclick="addNoteAt"
+             @dblclick="addMulti"
              @mousedown="handleMouseDown">
             <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg"
                 @mousemove="handleMouseMove" @mouseup="handleMouseUp">
