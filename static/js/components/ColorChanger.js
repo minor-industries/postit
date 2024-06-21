@@ -15,22 +15,22 @@ export function changeNoteColor() {
     ];
 
     const colorHtml = colorButtons.map(button => `
-        <button class="swal2-styled" style="background-color: ${button.color}; color: ${button.textColor};" onclick="selectColor('${button.color}', '${button.textColor}')">
+        <button style="background-color: ${button.color}; color: ${button.textColor}; padding: 10px; margin: 5px;" onclick="changeColor('${button.color}', '${button.textColor}')">
             ${button.label}
         </button>
     `).join('');
 
     return new Promise((resolve) => {
-        Swal.fire({
+        swal({
             title: 'Select a color',
-            html: colorHtml,
-            showConfirmButton: false,
-            didOpen: () => {
-                window.selectColor = (color, textColor) => {
-                    resolve({ color, textColor });
-                    Swal.close();
-                };
-            }
+            html: true,
+            text: colorHtml,
+            buttons: false
         });
+
+        window.changeColor = (color, textColor) => {
+            resolve({ color, textColor });
+            swal.close();
+        };
     });
 }
