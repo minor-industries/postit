@@ -1,3 +1,4 @@
+/// <reference path="./vue-types.d.ts" />
 export default Vue.extend({
     name: 'SelectionBox',
     data() {

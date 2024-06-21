@@ -1,8 +1,4 @@
-declare const Vue: {
-    extend: (options: any) => any;
-    component: (name: string, options: any) => void;
-    prototype: any;
-};
+/// <reference path="./vue-types.d.ts" />
 
 interface SvgPoint {
     x: number;
