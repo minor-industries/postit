@@ -66,6 +66,7 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     handleShiftMouseDown(event: MouseEvent): void;
     handleMouseMove(event: MouseEvent): void;
     handleMouseUp(event: MouseEvent): void;
+    align(): void;
     $refs: {
         whiteboard: HTMLDivElement;
         svgContainer: SVGSVGElement;
@@ -150,6 +151,8 @@ Vue.component('whiteboard-component', {
             } else if (event.key === 'e') {
                 event.preventDefault();
                 await this.oneDialog(this.handleEditNote);
+            } else if (event.key === 'a') {
+                this.align();
             }
         },
 
@@ -247,6 +250,23 @@ Vue.component('whiteboard-component', {
                 await this.addMulti(event);
             } else {
                 await this.addNoteAt(event);
+            }
+        },
+
+        align(this: WhiteboardComponentInstance) {
+            const selected = this.notes.filter(note => note.selected);
+            if (selected.length == 0) {
+                return;
+            }
+
+            selected.sort(function (a, b): number {
+                return a.y - b.y;
+            })
+
+            const top = selected[0];
+            for (let i = 1; i < selected.length; i++) {
+                selected[i].x = top.x;
+                selected[i].y = top.y + i * 60;
             }
         },
 

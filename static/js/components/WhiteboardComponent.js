@@ -86,6 +86,9 @@ Vue.component('whiteboard-component', {
                 event.preventDefault();
                 await this.oneDialog(this.handleEditNote);
             }
+            else if (event.key === 'a') {
+                this.align();
+            }
         },
         async oneDialog(callback) {
             if (this.isDialogOpen) {
@@ -172,6 +175,20 @@ Vue.component('whiteboard-component', {
             }
             else {
                 await this.addNoteAt(event);
+            }
+        },
+        align() {
+            const selected = this.notes.filter(note => note.selected);
+            if (selected.length == 0) {
+                return;
+            }
+            selected.sort(function (a, b) {
+                return a.y - b.y;
+            });
+            const top = selected[0];
+            for (let i = 1; i < selected.length; i++) {
+                selected[i].x = top.x;
+                selected[i].y = top.y + i * 60;
             }
         },
         screenToSvgPoint(clientX, clientY) {
