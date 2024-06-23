@@ -1,5 +1,5 @@
 /// <reference path="./vue-types.d.ts" />
-import { nearbyColor } from "./Util.js";
+import { nearbyColor, TextMeasurer } from "./Util.js";
 import { changeNoteColor } from "./ColorChanger.js";
 import { textInput } from "./EditNote.js";
 import { loadValue, saveValue } from "./Api.js";
@@ -17,6 +17,7 @@ Vue.component('whiteboard-component', {
             },
             isDragging: false,
             isDialogOpen: false,
+            textMeasure: new TextMeasurer()
         };
     },
     computed: {
@@ -144,7 +145,8 @@ Vue.component('whiteboard-component', {
                 return;
             }
             note.text = newText;
-            note.width = 11 * note.text.length + 10;
+            note.width = this.textMeasure.measureTextWidth(newText, "20px Arial") + 20;
+            // note.width = 11 * note.text.length + 10;
         },
         async addNoteAt(event) {
             const newText = await textInput('New Note', '');
@@ -163,7 +165,8 @@ Vue.component('whiteboard-component', {
                 text: newText,
                 x: adjustedX - 50,
                 y: adjustedY - 25,
-                width: 11 * newText.length + 10,
+                // width: 11 * newText.length + 10,
+                width: this.textMeasure.measureTextWidth(newText, "20px Arial") + 20,
                 height: 50,
                 selected: false,
                 isNoteDragging: false,
@@ -187,7 +190,7 @@ Vue.component('whiteboard-component', {
                     text: line,
                     x: x,
                     y: currentY,
-                    width: 11 * line.length + 10,
+                    width: this.textMeasure.measureTextWidth(newText, "20px Arial") + 20,
                     height: 50,
                     selected: false,
                     isNoteDragging: false,

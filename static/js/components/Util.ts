@@ -44,3 +44,28 @@ export function showNotification(type: 'success' | 'error', message: string) {
     }
 }
 
+export class TextMeasurer {
+    private offscreenCanvas: HTMLCanvasElement;
+    private offscreenCtx: CanvasRenderingContext2D;
+
+    constructor() {
+        this.offscreenCanvas = document.createElement('canvas');
+        const ctx = this.offscreenCanvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('Failed to get 2D context');
+        }
+        this.offscreenCtx = ctx;
+    }
+
+    measureTextWidth(text: string, font: string): number {
+        this.clearCanvas();
+        this.offscreenCtx.font = font; // Set the desired font properties
+        const width = this.offscreenCtx.measureText(text).width;
+        this.clearCanvas();
+        return width;
+    }
+
+    private clearCanvas(): void {
+        this.offscreenCtx.clearRect(0, 0, this.offscreenCanvas.width, this.offscreenCanvas.height);
+    }
+}

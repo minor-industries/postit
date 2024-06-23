@@ -13,7 +13,9 @@ Vue.component('note-component', {
         },
         textStyle() {
             return {
-                fill: this.note.textColor || 'black'
+                fill: this.note.textColor || 'black',
+                fontFamily: 'Arial, sans-serif', // Explicitly set the font family
+                fontSize: '20px' // Explicitly set the font size
             };
         }
     },
@@ -66,5 +68,5 @@ Vue.component('note-component', {
                 }
             }
         });
-    }
+    },
 });

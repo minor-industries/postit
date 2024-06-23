@@ -7,4 +7,6 @@ declare const Vue: {
 
 interface Vue {
     $emit(event: string, ...args: any[]): void;
+
+    $nextTick(callback: () => void): void;
 }
