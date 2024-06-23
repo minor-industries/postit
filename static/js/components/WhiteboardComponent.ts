@@ -2,7 +2,7 @@
 
 import {nearbyColor} from "./Util.js";
 import {changeNoteColor} from "./ColorChanger.js";
-import {editNoteText} from "./EditNote.js";
+import {textInput} from "./EditNote.js";
 import {loadValue, saveValue} from "./Api.js";
 import {getTextColorForBackground} from "./Colors.js";
 
@@ -68,6 +68,7 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     handleMouseUp(event: MouseEvent): void;
     align(): void;
     horizontalAlign(): void;
+    runCommand(): void;
     $refs: {
         whiteboard: HTMLDivElement;
         svgContainer: SVGSVGElement;
@@ -153,10 +154,17 @@ Vue.component('whiteboard-component', {
                 event.preventDefault();
                 await this.oneDialog(this.handleEditNote);
             } else if (event.key === 'a') {
+                if (event.shiftKey && event.ctrlKey) {
+                    this.runCommand();
+                }
                 this.align();
             } else if (event.key === 'h') {
                 this.horizontalAlign();
             }
+        },
+
+        async runCommand() {
+
         },
 
         async oneDialog(this: WhiteboardComponentInstance, callback: () => Promise<any>) {
@@ -178,7 +186,7 @@ Vue.component('whiteboard-component', {
                 return;
             }
             const note = selectedNotes[0];
-            const newText = await editNoteText(note);
+            const newText = await textInput('Edit Note Text', note.text);
             console.log(newText);
             if (newText === null) {
                 return;
@@ -188,7 +196,7 @@ Vue.component('whiteboard-component', {
         },
 
         async addNoteAt(this: WhiteboardComponentInstance, event: MouseEvent) {
-            const newText = await editNoteText({text: ''} as Note);
+            const newText = await textInput('New Note', '');
             if (!newText) {
                 return;
             }
@@ -219,7 +227,7 @@ Vue.component('whiteboard-component', {
 
         async addMulti(this: WhiteboardComponentInstance, event: MouseEvent) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
-            const newText = await editNoteText({text: ''}, true); // Use textarea
+            const newText = await textInput('Add Multiple', '', true); // Use textarea
 
             if (newText === null) {
                 return;

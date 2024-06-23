@@ -1,7 +1,7 @@
 /// <reference path="./vue-types.d.ts" />
 import { nearbyColor } from "./Util.js";
 import { changeNoteColor } from "./ColorChanger.js";
-import { editNoteText } from "./EditNote.js";
+import { textInput } from "./EditNote.js";
 import { loadValue, saveValue } from "./Api.js";
 import { getTextColorForBackground } from "./Colors.js";
 Vue.component('whiteboard-component', {
@@ -87,11 +87,16 @@ Vue.component('whiteboard-component', {
                 await this.oneDialog(this.handleEditNote);
             }
             else if (event.key === 'a') {
+                if (event.shiftKey && event.ctrlKey) {
+                    this.runCommand();
+                }
                 this.align();
             }
             else if (event.key === 'h') {
                 this.horizontalAlign();
             }
+        },
+        async runCommand() {
         },
         async oneDialog(callback) {
             if (this.isDialogOpen) {
@@ -112,7 +117,7 @@ Vue.component('whiteboard-component', {
                 return;
             }
             const note = selectedNotes[0];
-            const newText = await editNoteText(note);
+            const newText = await textInput('Edit Note Text', note.text);
             console.log(newText);
             if (newText === null) {
                 return;
@@ -121,7 +126,7 @@ Vue.component('whiteboard-component', {
             note.width = 11 * note.text.length + 10;
         },
         async addNoteAt(event) {
-            const newText = await editNoteText({ text: '' });
+            const newText = await textInput('New Note', '');
             if (!newText) {
                 return;
             }
@@ -148,7 +153,7 @@ Vue.component('whiteboard-component', {
         },
         async addMulti(event) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
-            const newText = await editNoteText({ text: '' }, true); // Use textarea
+            const newText = await textInput('Add Multiple', '', true); // Use textarea
             if (newText === null) {
                 return;
             }

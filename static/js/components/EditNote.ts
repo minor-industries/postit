@@ -1,18 +1,18 @@
 declare const vex: any; //TODO
 
-interface Note {
-    text: string;
-}
-
-export function editNoteText(note: Note, useTextarea: boolean = false): Promise<string | null> {
+export function textInput(
+    message: string,
+    existingText: string,
+    useTextarea: boolean = false
+): Promise<string | null> {
     return new Promise<string | null>((resolve) => {
         const inputId = 'vex-input-note-text';
         const inputElement = useTextarea
-            ? `<textarea id="${inputId}" name="noteText" class="vex-dialog-prompt-input" style="height: 100px;">${note.text}</textarea>`
-            : `<input type="text" id="${inputId}" name="noteText" class="vex-dialog-prompt-input" value="${note.text}" />`;
+            ? `<textarea id="${inputId}" name="noteText" class="vex-dialog-prompt-input" style="height: 100px;">${existingText}</textarea>`
+            : `<input type="text" id="${inputId}" name="noteText" class="vex-dialog-prompt-input" value="${existingText}" />`;
 
         const dialog = vex.dialog.open({
-            message: 'Edit Note Text',
+            message: message,
             input: inputElement,
             buttons: [
                 {
