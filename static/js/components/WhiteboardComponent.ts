@@ -68,11 +68,13 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     handleMouseUp(event: MouseEvent): void;
     align(): void;
     horizontalAlign(): void;
-    runCommand(): void;
+    runAction(): void;
+    fixWidth(): void;
     $refs: {
         whiteboard: HTMLDivElement;
         svgContainer: SVGSVGElement;
         selectionBox: any; // Adjust the type based on the actual type of selectionBox
+        [key: string]: any; // To handle dynamic refs
     };
 };
 
@@ -154,17 +156,37 @@ Vue.component('whiteboard-component', {
                 event.preventDefault();
                 await this.oneDialog(this.handleEditNote);
             } else if (event.key === 'a') {
-                if (event.shiftKey && event.ctrlKey) {
-                    this.runCommand();
-                }
                 this.align();
+            } else if (event.key === 'b') {
+                event.preventDefault();
+                this.runAction();
             } else if (event.key === 'h') {
                 this.horizontalAlign();
             }
         },
 
-        async runCommand() {
+        async runAction(this: WhiteboardComponentInstance) {
+            const action = await textInput('action:', 'fix-width');
+            console.log("action:", action);
+            switch (action) {
+                case "fix-width":
+                    this.fixWidth();
+            }
+        },
 
+        fixWidth(this: WhiteboardComponentInstance) {
+            const selectedNotes = this.notes.filter(note => note.selected);
+            selectedNotes.forEach(note => {
+                const refKey = `note-${note.id}`;
+                const noteComponentArray = this.$refs[refKey] as NoteComponentInstance[];
+                if (noteComponentArray && noteComponentArray.length > 0) {
+                    const noteComponent = noteComponentArray[0]; // Access the first item in the array
+                    if (noteComponent && typeof noteComponent.getTextWidth === 'function') {
+                        const width = noteComponent.getTextWidth();
+                        note.width = width + 18; // TODO?
+                    }
+                }
+            });
         },
 
         async oneDialog(this: WhiteboardComponentInstance, callback: () => Promise<any>) {
@@ -421,7 +443,8 @@ Vue.component('whiteboard-component', {
                 <g :transform="groupTransform">
                     <note-component v-for="note in notes" 
                                     :key="note.id" 
-                                    :note="note" 
+                                    :note="note"
+                                    :ref="'note-' + note.id" 
                                     @select-note="selectNoteHandler"
                                     @drag-start="isDragging = true"
                                     @drag-move="updateNotePosition(note, $event.dx, $event.dy)"

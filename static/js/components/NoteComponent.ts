@@ -34,7 +34,11 @@ type NoteComponentInstance = Vue & NoteComponentProps & {
     noteStyle: object;
     textStyle: object;
     selectNote(): void;
+    getTextWidth(): number;
     $el: HTMLElement;
+    $refs: {
+        text: SVGTextElement;
+    };
 };
 
 interface InteractEvent {
@@ -65,12 +69,19 @@ Vue.component('note-component', {
             if (!this.note.isNoteDragging) {
                 this.$emit('select-note', this.note);
             }
+        },
+        getTextWidth(this: NoteComponentInstance) {
+            const textElement = this.$refs.text;
+            if (textElement) {
+                const bbox = textElement.getBBox();
+                return bbox.width;
+            }
         }
     },
     template: `
         <g :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click.stop="selectNote">
             <rect class="note" :width="note.width" :height="note.height" :style="noteStyle"></rect>
-            <text x="10" y="30" :style="textStyle">
+            <text ref="text" x="10" y="30" :style="textStyle">
                 {{ note.text }}
             </text>
         </g>
@@ -89,7 +100,7 @@ Vue.component('note-component', {
                     if (event.shiftKey) {
                         return;
                     }
-                    this.$emit('drag-move', { dx: event.dx, dy: event.dy });
+                    this.$emit('drag-move', {dx: event.dx, dy: event.dy});
                 },
                 end: (event: InteractEvent) => {
                     if (event.shiftKey) {
