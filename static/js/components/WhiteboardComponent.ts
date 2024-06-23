@@ -71,6 +71,7 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     horizontalAlign(): void;
     runAction(): void;
     fixWidth(): void;
+    calcWidth(text: string): number;
     $refs: {
         whiteboard: HTMLDivElement;
         svgContainer: SVGSVGElement;
@@ -179,16 +180,13 @@ Vue.component('whiteboard-component', {
         fixWidth(this: WhiteboardComponentInstance) {
             const selectedNotes = this.notes.filter(note => note.selected);
             selectedNotes.forEach(note => {
-                const refKey = `note-${note.id}`;
-                const noteComponentArray = this.$refs[refKey] as NoteComponentInstance[];
-                if (noteComponentArray && noteComponentArray.length > 0) {
-                    const noteComponent = noteComponentArray[0]; // Access the first item in the array
-                    if (noteComponent && typeof noteComponent.getTextWidth === 'function') {
-                        const width = noteComponent.getTextWidth();
-                        note.width = width + 18; // TODO?
-                    }
-                }
+                note.text = note.text.trim();
+                note.width = this.calcWidth(note.text);
             });
+        },
+
+        calcWidth(this: WhiteboardComponentInstance, text: string): number {
+            return this.textMeasure.measureTextWidth(text, "20px Arial") + 20;
         },
 
         async oneDialog(this: WhiteboardComponentInstance, callback: () => Promise<any>) {
@@ -216,7 +214,7 @@ Vue.component('whiteboard-component', {
                 return;
             }
             note.text = newText;
-            note.width = this.textMeasure.measureTextWidth(newText, "20px Arial") + 20
+            note.width = this.calcWidth(newText);
         },
 
         async addNoteAt(this: WhiteboardComponentInstance, event: MouseEvent) {
@@ -239,7 +237,7 @@ Vue.component('whiteboard-component', {
                 text: newText,
                 x: adjustedX - 50,
                 y: adjustedY - 25,
-                width: this.textMeasure.measureTextWidth(newText, "20px Arial") + 20,
+                width: this.calcWidth(newText),
                 height: 50,
                 selected: false,
                 isNoteDragging: false,
@@ -267,7 +265,7 @@ Vue.component('whiteboard-component', {
                     text: line,
                     x: x,
                     y: currentY,
-                    width: this.textMeasure.measureTextWidth(newText, "20px Arial") + 20,
+                    width: this.calcWidth(newText),
                     height: 50,
                     selected: false,
                     isNoteDragging: false,

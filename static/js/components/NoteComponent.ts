@@ -34,7 +34,6 @@ type NoteComponentInstance = Vue & NoteComponentProps & {
     noteStyle: object;
     textStyle: object;
     selectNote(): void;
-    getTextWidth(): number;
     $el: HTMLElement;
     $refs: {
         text: SVGTextElement;
@@ -72,13 +71,6 @@ Vue.component('note-component', {
                 this.$emit('select-note', this.note);
             }
         },
-        getTextWidth(this: NoteComponentInstance) {
-            const textElement = this.$refs.text;
-            if (textElement) {
-                const bbox = textElement.getBBox();
-                return bbox.width;
-            }
-        }
     },
     template: `
         <g :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click.stop="selectNote">
