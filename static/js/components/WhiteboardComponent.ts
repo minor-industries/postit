@@ -441,6 +441,11 @@ Vue.component('whiteboard-component', {
             <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg"
                 @mousemove="handleMouseMove" @mouseup="handleMouseUp">
                 <g :transform="groupTransform">
+                
+                    <!-- Origin crosshair (+ sign) -->
+                    <line x1="-10" y1="0" x2="10" y2="0" stroke="grey" stroke-width="2"/>
+                    <line x1="0" y1="-10" x2="0" y2="10" stroke="grey" stroke-width="2"/>
+      
                     <note-component v-for="note in notes" 
                                     :key="note.id" 
                                     :note="note"
