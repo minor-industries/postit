@@ -1,12 +1,25 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/jessevdk/go-flags"
+	"github.com/pkg/errors"
+	"os"
 	"postit/database"
 	"postit/kv_service/kv"
 )
 
-func main() {
+var args struct {
+	Addr string `long:"addr" env:"ADDR" default:":8000" description:"server address"`
+}
+
+func run() error {
+	_, err := flags.Parse(&args)
+	if err != nil {
+		return errors.Wrap(err, "parse args")
+	}
+
 	r := gin.Default()
 
 	db, err := database.InitDB()
@@ -20,5 +33,12 @@ func main() {
 	r.Static("/static", "./static")
 	r.StaticFile("/", "./static/index.html")
 
-	r.Run(":8000")
+	return r.Run(args.Addr)
+}
+
+func main() {
+	if err := run(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+		os.Exit(1)
+	}
 }
