@@ -1,10 +1,13 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jessevdk/go-flags"
 	"github.com/pkg/errors"
+	"io/fs"
+	"net/http"
 	"os"
 	"postit/database"
 	"postit/kv_service/kv"
@@ -12,7 +15,16 @@ import (
 
 var args struct {
 	Addr string `long:"addr" env:"ADDR" default:":8000" description:"server address"`
+
+	StaticPath string `long:"static-path"`
 }
+
+//go:embed static/css/*.css
+//go:embed static/postit.html
+//go:embed static/js/*.js
+//go:embed static/js/components/*.js
+
+var FS embed.FS
 
 func run() error {
 	_, err := flags.Parse(&args)
@@ -30,11 +42,27 @@ func run() error {
 	}
 
 	s := &server{db: db}
+
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusTemporaryRedirect, "postit.html")
+	})
+
+	if args.StaticPath != "" {
+		r.Static("/static", args.StaticPath)
+		r.StaticFile("postit.html", args.StaticPath+"/postit.html")
+	} else {
+		sub, err := fs.Sub(FS, "static")
+		if err != nil {
+			panic(err)
+		}
+		static := http.FS(sub)
+		r.GET("/postit.html", func(c *gin.Context) {
+			c.FileFromFS("postit.html", static)
+		})
+		r.StaticFS("/static", static)
+	}
+
 	r.POST("/twirp/kv.KVService/*Method", gin.WrapH(kv.NewKVServiceServer(s, nil)))
-
-	r.Static("/static", "./static")
-	r.StaticFile("/", "./static/index.html")
-
 	return r.Run(args.Addr)
 }
 
