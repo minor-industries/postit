@@ -11,8 +11,8 @@ type KeyValue struct {
 	Value string
 }
 
-func InitDB() (*gorm.DB, error) {
-	db, err := gorm.Open(sqlite.Open("kv.db"), &gorm.Config{})
+func InitDB(dbPath string) (*gorm.DB, error) {
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}

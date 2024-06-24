@@ -22,7 +22,9 @@ func run() error {
 
 	r := gin.Default()
 
-	db, err := database.InitDB()
+	dbPath := os.ExpandEnv("$HOME/postit.db")
+
+	db, err := database.InitDB(dbPath)
 	if err != nil {
 		panic("failed to connect database")
 	}
