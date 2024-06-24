@@ -51,6 +51,7 @@ interface WhiteboardComponentData {
 type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     saveNotes(): Promise<void>;
     loadNotes(): Promise<void>;
+    restoreZoomAndPan(): void;
     handleKeydown(event: KeyboardEvent): Promise<void>;
     oneDialog(callback: () => Promise<any>): Promise<any>;
     handleEditNote(): Promise<void>;
@@ -100,6 +101,18 @@ Vue.component('whiteboard-component', {
         groupTransform(this: WhiteboardComponentInstance) {
             return `translate(${this.pan.translateX}, ${this.pan.translateY}) scale(${this.zoom.level})`;
         },
+    },
+    watch: {
+        'zoom.level'(newZoomLevel: number) {
+            console.log("zoomlevel");
+            sessionStorage.setItem('zoomLevel', newZoomLevel.toString());
+        },
+        'pan.translateX'(newTranslateX: number) {
+            sessionStorage.setItem('panTranslateX', newTranslateX.toString());
+        },
+        'pan.translateY'(newTranslateY: number) {
+            sessionStorage.setItem('panTranslateY', newTranslateY.toString());
+        }
     },
     methods: {
         async saveNotes(this: WhiteboardComponentInstance) {
@@ -402,7 +415,24 @@ Vue.component('whiteboard-component', {
             if (this.$refs.selectionBox.isActive) {
                 this.$refs.selectionBox.endSelection(event);
             }
-        }
+        },
+
+        restoreZoomAndPan(this: WhiteboardComponentInstance) {
+            const storedZoomLevel = sessionStorage.getItem('zoomLevel');
+            if (storedZoomLevel) {
+                this.zoom.level = parseFloat(storedZoomLevel);
+            }
+
+            const storedPanTranslateX = sessionStorage.getItem('panTranslateX');
+            if (storedPanTranslateX) {
+                this.pan.translateX = parseFloat(storedPanTranslateX);
+            }
+
+            const storedPanTranslateY = sessionStorage.getItem('panTranslateY');
+            if (storedPanTranslateY) {
+                this.pan.translateY = parseFloat(storedPanTranslateY);
+            }
+        },
     },
 
     mounted(this: WhiteboardComponentInstance) {
@@ -425,6 +455,7 @@ Vue.component('whiteboard-component', {
             }
         });
 
+        this.restoreZoomAndPan();
         this.loadNotes();
     },
 

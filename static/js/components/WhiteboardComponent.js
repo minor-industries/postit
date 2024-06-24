@@ -25,6 +25,18 @@ Vue.component('whiteboard-component', {
             return `translate(${this.pan.translateX}, ${this.pan.translateY}) scale(${this.zoom.level})`;
         },
     },
+    watch: {
+        'zoom.level'(newZoomLevel) {
+            console.log("zoomlevel");
+            sessionStorage.setItem('zoomLevel', newZoomLevel.toString());
+        },
+        'pan.translateX'(newTranslateX) {
+            sessionStorage.setItem('panTranslateX', newTranslateX.toString());
+        },
+        'pan.translateY'(newTranslateY) {
+            sessionStorage.setItem('panTranslateY', newTranslateY.toString());
+        }
+    },
     methods: {
         async saveNotes() {
             console.log("save notes");
@@ -303,7 +315,21 @@ Vue.component('whiteboard-component', {
             if (this.$refs.selectionBox.isActive) {
                 this.$refs.selectionBox.endSelection(event);
             }
-        }
+        },
+        restoreZoomAndPan() {
+            const storedZoomLevel = sessionStorage.getItem('zoomLevel');
+            if (storedZoomLevel) {
+                this.zoom.level = parseFloat(storedZoomLevel);
+            }
+            const storedPanTranslateX = sessionStorage.getItem('panTranslateX');
+            if (storedPanTranslateX) {
+                this.pan.translateX = parseFloat(storedPanTranslateX);
+            }
+            const storedPanTranslateY = sessionStorage.getItem('panTranslateY');
+            if (storedPanTranslateY) {
+                this.pan.translateY = parseFloat(storedPanTranslateY);
+            }
+        },
     },
     mounted() {
         this.$refs.whiteboard.focus();
@@ -323,6 +349,7 @@ Vue.component('whiteboard-component', {
                 }
             }
         });
+        this.restoreZoomAndPan();
         this.loadNotes();
     },
     beforeDestroy() {
