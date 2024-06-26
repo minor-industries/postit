@@ -1,11 +1,12 @@
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 use rocket::fs::{FileServer, NamedFile};
 use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::serde::Serialize;
 use rocket::State;
-use std::path::PathBuf;
 use std::net::SocketAddr;
+use std::path::PathBuf;
 use structopt::StructOpt;
 use rust_embed::RustEmbed;
 
@@ -42,10 +43,10 @@ async fn postit(static_path: &State<Option<String>>) -> Option<NamedFile> {
     }
 }
 
-#[get("/json")]
-fn get_json() -> Json<Response> {
+#[post("/twirp/kv.KVService/LoadValue")]
+fn load_value() -> Json<Response> {
     Json(Response {
-        message: "This is a constant JSON response.",
+        message: "This is a constant JSON response for LoadValue.",
     })
 }
 
@@ -61,6 +62,6 @@ fn rocket() -> _ {
         ..rocket::Config::default()
     })
         .manage(opt.static_path.clone())
-        .mount("/", routes![index, postit, get_json])
+        .mount("/", routes![index, postit, load_value])
         .mount("/static", FileServer::from("static"))
 }
