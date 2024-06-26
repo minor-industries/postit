@@ -4,7 +4,7 @@ use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::serde::Serialize;
 use rocket::State;
-use std::path::PathBuf; // Import PathBuf here
+use std::path::PathBuf;
 use std::net::SocketAddr;
 use structopt::StructOpt;
 use rust_embed::RustEmbed;
