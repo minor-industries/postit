@@ -1,12 +1,11 @@
-#[macro_use]
-extern crate rocket;
+#[macro_use] extern crate rocket;
 use rocket::fs::{FileServer, NamedFile};
 use rocket::response::Redirect;
 use rocket::serde::json::Json;
-use rocket::serde::Serialize;
 use rocket::State;
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::fs::read_to_string;
 use structopt::StructOpt;
 use rust_embed::RustEmbed;
 
@@ -24,11 +23,6 @@ struct Opt {
 #[folder = "static/"]
 struct Asset;
 
-#[derive(Serialize)]
-struct Response {
-    message: &'static str,
-}
-
 #[get("/")]
 fn index() -> Redirect {
     Redirect::temporary(uri!(postit))
@@ -43,11 +37,19 @@ async fn postit(static_path: &State<Option<String>>) -> Option<NamedFile> {
     }
 }
 
+use rocket::response::content::RawJson;
+
 #[post("/twirp/kv.KVService/LoadValue")]
-fn load_value() -> Json<Response> {
-    Json(Response {
-        message: "This is a constant JSON response for LoadValue.",
-    })
+fn load_value() -> Result<RawJson<String>, std::io::Error> {
+    use std::fs::read_to_string;
+
+    // Read the JSON file into a string and handle any errors
+    let json_string = read_to_string("response.json")?;
+
+    // Print the JSON string to the console
+    println!("Loaded JSON: {}", json_string);
+
+    Ok(RawJson(json_string))
 }
 
 #[launch]
