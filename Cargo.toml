@@ -1,0 +1,11 @@
+[package]
+name = "postit"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rocket = { version = "0.5.1", features = ["json"] }
+rust-embed = "8.4.0"
+serde = "1.0.203"
+structopt = "0.3.26"
+tokio = "1.38.0"
