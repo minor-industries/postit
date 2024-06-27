@@ -5,9 +5,14 @@ use rocket::serde::json::Json;
 use rocket::State;
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use std::fs::read_to_string;
 use structopt::StructOpt;
 use rust_embed::RustEmbed;
+use sqlx::SqlitePool;
+use anyhow::Result;
+
+mod db;
+
+use crate::db::db::{init_db, load};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "postit")]
@@ -37,19 +42,13 @@ async fn postit(static_path: &State<Option<String>>) -> Option<NamedFile> {
     }
 }
 
-use rocket::response::content::RawJson;
-
-#[post("/twirp/kv.KVService/LoadValue")]
-fn load_value() -> Result<RawJson<String>, std::io::Error> {
-    use std::fs::read_to_string;
-
-    // Read the JSON file into a string and handle any errors
-    let json_string = read_to_string("response.json")?;
-
-    // Print the JSON string to the console
-    println!("Loaded JSON: {}", json_string);
-
-    Ok(RawJson(json_string))
+#[post("/twirp/kv.KVService/LoadValue", data = "<key>")]
+async fn load_value(db: &State<SqlitePool>, key: String) -> Result<Json<Option<String>>, std::io::Error> {
+    let value = load(db.inner(), &key).await.map_err(|e| {
+        eprintln!("Failed to load value: {}", e);
+        std::io::Error::new(std::io::ErrorKind::Other, "Failed to load value")
+    })?;
+    Ok(Json(value))
 }
 
 #[launch]
@@ -58,11 +57,14 @@ fn rocket() -> _ {
 
     let addr: SocketAddr = opt.addr.parse().expect("invalid address");
 
+    let db = tokio::runtime::Runtime::new().unwrap().block_on(init_db("example.db")).unwrap();
+
     rocket::custom(rocket::Config {
         address: addr.ip(),
         port: addr.port(),
         ..rocket::Config::default()
     })
+        .manage(db)
         .manage(opt.static_path.clone())
         .mount("/", routes![index, postit, load_value])
         .mount("/static", FileServer::from("static"))
