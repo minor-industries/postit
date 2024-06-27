@@ -10,6 +10,7 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::path::PathBuf;
+use mime_guess::from_path;
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
 
@@ -79,22 +80,12 @@ async fn handle_static_file(static_path: Arc<Option<String>>, req: Request<Body>
                     .unwrap());
             }
 
-            // Determine the content type based on the file extension
-            let mime_type = match file_path.extension().and_then(std::ffi::OsStr::to_str) {
-                Some("html") => "text/html",
-                Some("css") => "text/css",
-                Some("js") => "application/javascript",
-                Some("png") => "image/png",
-                Some("jpg") | Some("jpeg") => "image/jpeg",
-                Some("gif") => "image/gif",
-                Some("svg") => "image/svg+xml",
-                Some("json") => "application/json",
-                _ => "application/octet-stream",
-            };
+            // Determine the content type using mime_guess
+            let mime_type = from_path(&file_path).first_or_octet_stream();
 
             Ok(Response::builder()
                 .status(StatusCode::OK)
-                .header("Content-Type", mime_type)
+                .header("Content-Type", mime_type.as_ref())
                 .body(Body::from(contents))
                 .unwrap())
         }
