@@ -11,3 +11,5 @@ sqlx = { version="0.7.4", features = ["sqlite", "runtime-tokio-native-tls"] }
 structopt = "0.3.26"
 tokio = "1.38.0"
 anyhow = "1.0.86"
+hyper = "0.14.29"
+serde_json = "1.0.118"

@@ -1272,9 +1272,11 @@ name = "postit"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "hyper",
  "rocket",
  "rust-embed",
  "serde",
+ "serde_json",
  "sqlx",
  "structopt",
  "tokio",
