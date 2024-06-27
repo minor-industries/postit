@@ -61,19 +61,10 @@ async fn handle_postit(static_path: Arc<Option<String>>) -> Result<Response<Body
 async fn handle_static_file(static_path: Arc<Option<String>>, req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let req_path = req.uri().path().trim_start_matches('/');
 
-    // Check if the requested path starts with "static"
-    let file_path = if let Some(ref path) = *static_path {
-        if req_path.starts_with("static/") {
-            PathBuf::from(path).join(req_path.trim_start_matches("static/"))
-        } else {
-            PathBuf::from(path).join(req_path)
-        }
-    } else {
-        if req_path.starts_with("static/") {
-            PathBuf::from("static").join(req_path.trim_start_matches("static/"))
-        } else {
-            PathBuf::from("static").join(req_path)
-        }
+    // Construct the full file path
+    let file_path = match &*static_path {
+        Some(path) => PathBuf::from(path).join(req_path.trim_start_matches("static/")),
+        None => PathBuf::from("static").join(req_path.trim_start_matches("static/")),
     };
 
     // Open the file and read its contents
