@@ -1,14 +1,13 @@
 use axum::{
     extract::{Extension, Path},
     response::{Html, Redirect, Response},
-    routing::{get, post},
+    routing::{get, post, get_service},
     Router,
 };
 use mime_guess::from_path;
 use rust_embed::RustEmbed;
 use std::{net::SocketAddr, sync::Arc};
 use structopt::StructOpt;
-use tower::ServiceBuilder;
 use tower_http::services::ServeDir;
 
 mod db;
@@ -22,6 +21,9 @@ use crate::load_save::{handle_load_value, handle_save_value};
 struct Opt {
     #[structopt(long, env = "ADDR", default_value = "127.0.0.1:8000")]
     addr: String,
+
+    #[structopt(long, env = "STATIC_DIR", default_value = "")]
+    static_dir: String,
 }
 
 #[derive(RustEmbed)]
@@ -51,7 +53,7 @@ async fn main() {
     let db = init_db("example.db").await.unwrap();
     let db = Arc::new(db);
 
-    let app = Router::new()
+    let mut app = Router::new()
         .route("/", get(|| async { Redirect::temporary("/static/postit.html") }))
         .route(
             "/twirp/kv.KVService/LoadValue",
@@ -61,18 +63,26 @@ async fn main() {
             "/twirp/kv.KVService/SaveValue",
             post(handle_save_value),
         )
-        .route("/static/*file", get(|Path(file): Path<String>| async move {
+        .layer(Extension(db));
+
+    if !opt.static_dir.is_empty() {
+        app = app.nest_service("/static", get_service(ServeDir::new(opt.static_dir.clone())));
+    } else {
+        app = app.route("/static/*file", get(|Path(file): Path<String>| async move {
             let result = serve_embed_file(&file).await;
             match result {
                 Ok(result) => {
                     println!("path = {:?}, ok = {}", file, true);
                     result
                 }
-                Err(E) => panic!("{}", E)
+                Err(e) => {
+                    println!("path = {:?}, ok = {}", file, false);
+                    panic!("{}", e);
+                }
             }
-        }))
-        .layer(Extension(db));
+        }));
+    }
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
