@@ -1,15 +1,15 @@
 use axum::{
-    extract::Extension,
-    response::Redirect,
+    extract::{Extension, Path},
+    response::{Html, Redirect, Response},
     routing::{get, post},
     Router,
 };
-use axum::routing::get_service;
-use std::net::SocketAddr;
-use std::sync::Arc;
-use std::path::PathBuf;
+use mime_guess::from_path;
+use rust_embed::RustEmbed;
+use std::{net::SocketAddr, sync::Arc};
 use structopt::StructOpt;
-use tower_http::services::{ServeDir, ServeFile};
+use tower::ServiceBuilder;
+use tower_http::services::ServeDir;
 
 mod db;
 mod load_save;
@@ -22,13 +22,29 @@ use crate::load_save::{handle_load_value, handle_save_value};
 struct Opt {
     #[structopt(long, env = "ADDR", default_value = "127.0.0.1:8000")]
     addr: String,
-
-    #[structopt(long = "static-path")]
-    static_path: Option<String>,
 }
+
+#[derive(RustEmbed)]
+#[folder = "static/"]
+struct StaticFiles;
 
 async fn handle_index() -> Redirect {
     Redirect::temporary("/postit.html")
+}
+
+async fn serve_embed_file(filename: &str) -> Result<Response, axum::http::StatusCode> {
+    let file = StaticFiles::get(filename);
+    match file {
+        Some(content) => {
+            let mime_type = from_path(filename).first_or_octet_stream();
+            let body = content.data.as_ref().to_vec();
+            Ok(Response::builder()
+                .header(axum::http::header::CONTENT_TYPE, mime_type.as_ref())
+                .body(body.into())
+                .unwrap())
+        }
+        None => Err(axum::http::StatusCode::NOT_FOUND),
+    }
 }
 
 #[tokio::main]
@@ -38,17 +54,10 @@ async fn main() {
 
     let db = init_db("example.db").await.unwrap();
     let db = Arc::new(db);
-    let static_path = Arc::new(opt.static_path.clone());
-
-    let postit_path = if let Some(path) = &*static_path {
-        PathBuf::from(path).join("postit.html")
-    } else {
-        PathBuf::from("static").join("postit.html")
-    };
 
     let app = Router::new()
         .route("/", get(handle_index))
-        .nest_service("/postit.html", get_service(ServeFile::new(postit_path)))
+        .route("/postit.html", get(|| async { serve_embed_file("postit.html").await }))
         .route(
             "/twirp/kv.KVService/LoadValue",
             post(handle_load_value),
@@ -57,9 +66,17 @@ async fn main() {
             "/twirp/kv.KVService/SaveValue",
             post(handle_save_value),
         )
-        .nest_service("/static", get_service(ServeDir::new("static")))
-        .layer(Extension(db))
-        .layer(Extension(static_path));
+        .route("/static/*file", get(|Path(file): Path<String>| async move {
+            let result = serve_embed_file(&file).await;
+            match result {
+                Ok(result) => {
+                    println!("path = {:?}, ok = {}", file, true);
+                    result
+                }
+                Err(E) => panic!("{}", E)
+            }
+        }))
+        .layer(Extension(db));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
