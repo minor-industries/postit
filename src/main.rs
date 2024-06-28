@@ -7,24 +7,20 @@ use axum::{
     Router,
 };
 use axum::routing::get_service;
-use hyper::server::Server;
 use mime_guess::from_path;
 use rust_embed::RustEmbed;
-use serde_json::json;
-use sqlx::SqlitePool;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use structopt::StructOpt;
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
-use tower::BoxError;
 use tower_http::services::ServeDir;
 
 mod db;
 mod load_save;
 
-use crate::db::db::{init_db, load, save};
+use crate::db::db::{init_db};
 use crate::load_save::{handle_load_value, handle_save_value};
 
 #[derive(StructOpt, Debug)]
