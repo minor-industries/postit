@@ -7,10 +7,14 @@ edition = "2021"
 rocket = { version = "0.5.1", features = ["json"] }
 rust-embed = "8.4.0"
 serde = "1.0.203"
-sqlx = { version="0.7.4", features = ["sqlite", "runtime-tokio-native-tls"] }
+sqlx = { version = "0.7.4", features = ["sqlite", "runtime-tokio-native-tls"] }
 structopt = "0.3.26"
 tokio = "1.38.0"
 anyhow = "1.0.86"
 hyper = "0.14.29"
 serde_json = "1.0.118"
 mime_guess = "2.0.4"
+http = "0.2.12"
+tower = "0.4.13"
+axum = "0.7.5"
+tower-http = { version = "0.5.2", features = ["fs"] }

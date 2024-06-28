@@ -1,18 +1,25 @@
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Request, Response, Server, StatusCode};
-use hyper::header::LOCATION;
-use hyper::http::Method;
+use axum::{
+    body::Body,
+    extract::Extension,
+    http::{Response, StatusCode},
+    response::{IntoResponse, Redirect},
+    routing::{get, post},
+    Router,
+};
+use axum::routing::get_service;
+use hyper::server::Server;
 use mime_guess::from_path;
+use rust_embed::RustEmbed;
 use serde_json::json;
 use sqlx::SqlitePool;
-use structopt::StructOpt;
-use rust_embed::RustEmbed;
-use std::convert::Infallible;
 use std::net::SocketAddr;
-use std::sync::Arc;
 use std::path::PathBuf;
+use std::sync::Arc;
+use structopt::StructOpt;
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
+use tower::BoxError;
+use tower_http::services::ServeDir;
 
 mod db;
 mod load_save;
@@ -34,104 +41,37 @@ struct Opt {
 #[folder = "static/"]
 struct Asset;
 
-async fn handle_index() -> Result<Response<Body>, Infallible> {
-    Ok(Response::builder()
-        .status(StatusCode::TEMPORARY_REDIRECT)
-        .header(LOCATION, "/postit.html")
-        .body(Body::empty())
-        .unwrap())
+async fn handle_index() -> Redirect {
+    Redirect::temporary("/postit.html")
 }
 
-async fn handle_postit(static_path: Arc<Option<String>>) -> Result<Response<Body>, Infallible> {
+async fn handle_postit(Extension(static_path): Extension<Arc<Option<String>>>) -> impl IntoResponse {
     let req_path = "postit.html";
-
-    // Construct the full file path
     let file_path = match &*static_path {
         Some(path) => PathBuf::from(path).join(req_path),
         None => PathBuf::from("static").join(req_path),
     };
 
-    // Open the file and read its contents
     match File::open(&file_path).await {
         Ok(mut file) => {
             let mut contents = Vec::new();
             if let Err(e) = file.read_to_end(&mut contents).await {
                 eprintln!("Error reading file {}: {}", file_path.display(), e);
-                return Ok(Response::builder()
-                    .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .body(Body::from("Internal Server Error"))
-                    .unwrap());
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal Server Error".to_string(),
+                )
+                    .into_response();
             }
-
-            // Determine the content type using mime_guess
             let mime_type = from_path(&file_path).first_or_octet_stream();
-
-            Ok(Response::builder()
+            Response::builder()
                 .status(StatusCode::OK)
                 .header("Content-Type", mime_type.as_ref())
                 .body(Body::from(contents))
-                .unwrap())
+                .unwrap()
+                .into_response()
         }
-        Err(_) => Ok(Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::from("File not found"))
-            .unwrap()),
-    }
-}
-
-async fn handle_static_file(static_path: Arc<Option<String>>, req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    let req_path = req.uri().path().trim_start_matches('/');
-
-    // Construct the full file path
-    let file_path = match &*static_path {
-        Some(path) => PathBuf::from(path).join(req_path.trim_start_matches("static/")),
-        None => PathBuf::from("static").join(req_path.trim_start_matches("static/")),
-    };
-
-    // Open the file and read its contents
-    match File::open(&file_path).await {
-        Ok(mut file) => {
-            let mut contents = Vec::new();
-            if let Err(e) = file.read_to_end(&mut contents).await {
-                eprintln!("Error reading file {}: {}", file_path.display(), e);
-                return Ok(Response::builder()
-                    .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .body(Body::from("Internal Server Error"))
-                    .unwrap());
-            }
-
-            // Determine the content type using mime_guess
-            let mime_type = from_path(&file_path).first_or_octet_stream();
-
-            Ok(Response::builder()
-                .status(StatusCode::OK)
-                .header("Content-Type", mime_type.as_ref())
-                .body(Body::from(contents))
-                .unwrap())
-        }
-        Err(_) => Ok(Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::from("File not found"))
-            .unwrap()),
-    }
-}
-
-
-async fn handle_request(
-    req: Request<Body>,
-    static_path: Arc<Option<String>>,
-    db: Arc<SqlitePool>,
-) -> Result<Response<Body>, Infallible> {
-    match (req.method(), req.uri().path()) {
-        (&Method::GET, "/") => handle_index().await,
-        (&Method::GET, "/postit.html") => handle_postit(static_path.clone()).await,
-        (&Method::POST, "/twirp/kv.KVService/LoadValue") => handle_load_value(db.clone(), req).await,
-        (&Method::POST, "/twirp/kv.KVService/SaveValue") => handle_save_value(db.clone(), req).await,
-        _ if req.uri().path().starts_with("/static/") => handle_static_file(static_path, req).await,
-        _ => Ok(Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::from("Not Found"))
-            .unwrap()),
+        Err(_) => (StatusCode::NOT_FOUND, "File not found".to_string()).into_response(),
     }
 }
 
@@ -144,19 +84,21 @@ async fn main() {
     let db = Arc::new(db);
     let static_path = Arc::new(opt.static_path.clone());
 
-    let make_svc = make_service_fn(move |_| {
-        let static_path = static_path.clone();
-        let db = db.clone();
-        async {
-            Ok::<_, Infallible>(service_fn(move |req| {
-                handle_request(req, static_path.clone(), db.clone())
-            }))
-        }
-    });
+    let app = Router::new()
+        .route("/", get(handle_index))
+        .route("/postit.html", get(handle_postit))
+        .route(
+            "/twirp/kv.KVService/LoadValue",
+            post(handle_load_value),
+        )
+        .route(
+            "/twirp/kv.KVService/SaveValue",
+            post(handle_save_value),
+        )
+        .nest_service("/static", get_service(ServeDir::new("static")))
+        .layer(Extension(db))
+        .layer(Extension(static_path));
 
-    let server = Server::bind(&addr).serve(make_svc);
-
-    if let Err(e) = server.await {
-        eprintln!("server error: {}", e);
-    }
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }

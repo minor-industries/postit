@@ -1,12 +1,18 @@
+use axum::{
+    body::Bytes,
+    extract::{Extension, Json},
+    http::{Response, StatusCode},
+    response::IntoResponse,
+    routing::{post},
+    Router,
+};
 use serde::{Deserialize, Serialize};
-use hyper::{Body, Request, Response, StatusCode};
 use sqlx::SqlitePool;
-use std::convert::Infallible;
 use std::sync::Arc;
 use crate::db::db::{load, save};
 
 #[derive(Deserialize)]
-struct SaveValueRequest {
+pub struct SaveValueRequest {
     key: String,
     value: String,
 }
@@ -17,7 +23,7 @@ struct SaveValueResponse {
 }
 
 #[derive(Deserialize)]
-struct LoadValueRequest {
+pub struct LoadValueRequest {
     key: String,
 }
 
@@ -27,87 +33,45 @@ struct LoadValueResponse {
     found: bool,
 }
 
-pub async fn handle_save_value(db: Arc<SqlitePool>, req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    let whole_body = match hyper::body::to_bytes(req.into_body()).await {
-        Ok(body) => body,
-        Err(_) => {
-            eprintln!("Failed to read request body");
-            return Ok(Response::builder()
-                .status(StatusCode::BAD_REQUEST)
-                .body(Body::from("Invalid request body"))
-                .unwrap());
-        }
-    };
-
-    let req: SaveValueRequest = match serde_json::from_slice(&whole_body) {
-        Ok(json) => json,
-        Err(_) => {
-            eprintln!("Failed to parse JSON from request body");
-            return Ok(Response::builder()
-                .status(StatusCode::BAD_REQUEST)
-                .body(Body::from("Invalid JSON"))
-                .unwrap());
-        }
-    };
-
+pub async fn handle_save_value(
+    Extension(db): Extension<Arc<SqlitePool>>,
+    Json(req): Json<SaveValueRequest>,
+) -> impl IntoResponse {
     match save(&db, &req.key, &req.value).await {
         Ok(_) => {
             let res = SaveValueResponse { success: true };
-            let body = serde_json::to_string(&res).unwrap();
-            Ok(Response::new(Body::from(body)))
+            Json(res).into_response()
         }
         Err(e) => {
             eprintln!("Failed to save value: {}", e);
             let res = SaveValueResponse { success: false };
-            let body = serde_json::to_string(&res).unwrap();
-            Ok(Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(Body::from(body))
-                .unwrap())
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(res),
+            ).into_response()
         }
     }
 }
 
-pub async fn handle_load_value(db: Arc<SqlitePool>, req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    let whole_body = match hyper::body::to_bytes(req.into_body()).await {
-        Ok(body) => body,
-        Err(_) => {
-            eprintln!("Failed to read request body");
-            return Ok(Response::builder()
-                .status(StatusCode::BAD_REQUEST)
-                .body(Body::from("Invalid request body"))
-                .unwrap());
-        }
-    };
-
-    let req: LoadValueRequest = match serde_json::from_slice(&whole_body) {
-        Ok(json) => json,
-        Err(_) => {
-            eprintln!("Failed to parse JSON from request body");
-            return Ok(Response::builder()
-                .status(StatusCode::BAD_REQUEST)
-                .body(Body::from("Invalid JSON"))
-                .unwrap());
-        }
-    };
-
+pub async fn handle_load_value(
+    Extension(db): Extension<Arc<SqlitePool>>,
+    Json(req): Json<LoadValueRequest>,
+) -> impl IntoResponse {
     match load(&db, &req.key).await {
         Ok(Some(value)) => {
             let res = LoadValueResponse { value: Some(value), found: true };
-            let body = serde_json::to_string(&res).unwrap();
-            Ok(Response::new(Body::from(body)))
+            Json(res).into_response()
         }
         Ok(None) => {
             let res = LoadValueResponse { value: None, found: false };
-            let body = serde_json::to_string(&res).unwrap();
-            Ok(Response::new(Body::from(body)))
+            Json(res).into_response()
         }
         Err(e) => {
             eprintln!("Failed to load value: {}", e);
-            Ok(Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(Body::from("Failed to load value"))
-                .unwrap())
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to load value",
+            ).into_response()
         }
     }
 }
