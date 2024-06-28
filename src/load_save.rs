@@ -1,10 +1,7 @@
 use axum::{
-    body::Bytes,
     extract::{Extension, Json},
-    http::{Response, StatusCode},
+    http::{StatusCode},
     response::IntoResponse,
-    routing::{post},
-    Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;

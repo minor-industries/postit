@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path},
-    response::{Html, Redirect, Response},
+    response::{Redirect, Response},
     routing::{get, post, get_service},
     Router,
 };
@@ -30,11 +30,11 @@ struct Opt {
 #[folder = "static/"]
 struct StaticFiles;
 
-async fn serve_embed_file(filename: &str) -> Result<Response, axum::http::StatusCode> {
-    let file = StaticFiles::get(filename);
-    match file {
+async fn serve_embed_file(Path(file): Path<String>) -> Result<Response, axum::http::StatusCode> {
+    let file_content = StaticFiles::get(&file);
+    match file_content {
         Some(content) => {
-            let mime_type = from_path(filename).first_or_octet_stream();
+            let mime_type = from_path(&file).first_or_octet_stream();
             let body = content.data.as_ref().to_vec();
             Ok(Response::builder()
                 .header(axum::http::header::CONTENT_TYPE, mime_type.as_ref())
@@ -68,19 +68,7 @@ async fn main() {
     let app = if !opt.static_dir.is_empty() {
         app.nest_service("/static", get_service(ServeDir::new(opt.static_dir.clone())))
     } else {
-        app.route("/static/*file", get(|Path(file): Path<String>| async move {
-            let result = serve_embed_file(&file).await;
-            match result {
-                Ok(result) => {
-                    println!("path = {:?}, ok = {}", file, true);
-                    result
-                }
-                Err(e) => {
-                    println!("path = {:?}, ok = {}", file, false);
-                    panic!("{}", e);
-                }
-            }
-        }))
+        app.route("/static/*file", get(serve_embed_file))
     };
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
