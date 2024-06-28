@@ -28,10 +28,6 @@ struct Opt {
 #[folder = "static/"]
 struct StaticFiles;
 
-async fn handle_index() -> Redirect {
-    Redirect::temporary("/postit.html")
-}
-
 async fn serve_embed_file(filename: &str) -> Result<Response, axum::http::StatusCode> {
     let file = StaticFiles::get(filename);
     match file {
@@ -56,8 +52,7 @@ async fn main() {
     let db = Arc::new(db);
 
     let app = Router::new()
-        .route("/", get(handle_index))
-        .route("/postit.html", get(|| async { serve_embed_file("postit.html").await }))
+        .route("/", get(|| async { Redirect::temporary("/static/postit.html") }))
         .route(
             "/twirp/kv.KVService/LoadValue",
             post(handle_load_value),
