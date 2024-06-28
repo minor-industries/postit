@@ -53,7 +53,7 @@ async fn main() {
     let db = init_db("example.db").await.unwrap();
     let db = Arc::new(db);
 
-    let mut app = Router::new()
+    let app = Router::new()
         .route("/", get(|| async { Redirect::temporary("/static/postit.html") }))
         .route(
             "/twirp/kv.KVService/LoadValue",
@@ -65,10 +65,10 @@ async fn main() {
         )
         .layer(Extension(db));
 
-    if !opt.static_dir.is_empty() {
-        app = app.nest_service("/static", get_service(ServeDir::new(opt.static_dir.clone())));
+    let app = if !opt.static_dir.is_empty() {
+        app.nest_service("/static", get_service(ServeDir::new(opt.static_dir.clone())))
     } else {
-        app = app.route("/static/*file", get(|Path(file): Path<String>| async move {
+        app.route("/static/*file", get(|Path(file): Path<String>| async move {
             let result = serve_embed_file(&file).await;
             match result {
                 Ok(result) => {
@@ -80,8 +80,8 @@ async fn main() {
                     panic!("{}", e);
                 }
             }
-        }));
-    }
+        }))
+    };
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
