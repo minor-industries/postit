@@ -1,26 +1,20 @@
 use axum::{
-    body::Body,
     extract::Extension,
-    http::{Response, StatusCode},
-    response::{IntoResponse, Redirect},
+    response::Redirect,
     routing::{get, post},
     Router,
 };
 use axum::routing::get_service;
-use mime_guess::from_path;
-use rust_embed::RustEmbed;
 use std::net::SocketAddr;
-use std::path::PathBuf;
 use std::sync::Arc;
+use std::path::PathBuf;
 use structopt::StructOpt;
-use tokio::fs::File;
-use tokio::io::AsyncReadExt;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 
 mod db;
 mod load_save;
 
-use crate::db::db::{init_db};
+use crate::db::db::init_db;
 use crate::load_save::{handle_load_value, handle_save_value};
 
 #[derive(StructOpt, Debug)]
@@ -33,42 +27,8 @@ struct Opt {
     static_path: Option<String>,
 }
 
-#[derive(RustEmbed)]
-#[folder = "static/"]
-struct Asset;
-
 async fn handle_index() -> Redirect {
     Redirect::temporary("/postit.html")
-}
-
-async fn handle_postit(Extension(static_path): Extension<Arc<Option<String>>>) -> impl IntoResponse {
-    let req_path = "postit.html";
-    let file_path = match &*static_path {
-        Some(path) => PathBuf::from(path).join(req_path),
-        None => PathBuf::from("static").join(req_path),
-    };
-
-    match File::open(&file_path).await {
-        Ok(mut file) => {
-            let mut contents = Vec::new();
-            if let Err(e) = file.read_to_end(&mut contents).await {
-                eprintln!("Error reading file {}: {}", file_path.display(), e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Internal Server Error".to_string(),
-                )
-                    .into_response();
-            }
-            let mime_type = from_path(&file_path).first_or_octet_stream();
-            Response::builder()
-                .status(StatusCode::OK)
-                .header("Content-Type", mime_type.as_ref())
-                .body(Body::from(contents))
-                .unwrap()
-                .into_response()
-        }
-        Err(_) => (StatusCode::NOT_FOUND, "File not found".to_string()).into_response(),
-    }
 }
 
 #[tokio::main]
@@ -80,9 +40,15 @@ async fn main() {
     let db = Arc::new(db);
     let static_path = Arc::new(opt.static_path.clone());
 
+    let postit_path = if let Some(path) = &*static_path {
+        PathBuf::from(path).join("postit.html")
+    } else {
+        PathBuf::from("static").join("postit.html")
+    };
+
     let app = Router::new()
         .route("/", get(handle_index))
-        .route("/postit.html", get(handle_postit))
+        .nest_service("/postit.html", get_service(ServeFile::new(postit_path)))
         .route(
             "/twirp/kv.KVService/LoadValue",
             post(handle_load_value),
