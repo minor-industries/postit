@@ -17,7 +17,8 @@ Vue.component('whiteboard-component', {
             },
             isDragging: false,
             isDialogOpen: false,
-            textMeasure: new TextMeasurer()
+            textMeasure: new TextMeasurer(),
+            db: null,
         };
     },
     computed: {
@@ -180,6 +181,17 @@ Vue.component('whiteboard-component', {
                 textColor: textColor
             };
             this.notes.push(newNote);
+            // couchdb here
+            try {
+                await this.db.put({
+                    _id: newNote.id,
+                    ...newNote
+                });
+                console.log("Note saved to CouchDB");
+            }
+            catch (error) {
+                console.error("Error saving note to CouchDB", error);
+            }
         },
         async addMulti(event) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
@@ -332,6 +344,12 @@ Vue.component('whiteboard-component', {
         },
     },
     mounted() {
+        const dbUrl = 'http://localhost:5984/my_database';
+        const docId = 'mydoc';
+        const username = 'admin';
+        const password = 'mypassword';
+        const db = new window.PouchDB(dbUrl, { skip_setup: true, auth: { username, password } });
+        this.db = db;
         this.$refs.whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);
         interact(this.$refs.svgContainer).draggable({

@@ -9,6 +9,12 @@ import {getTextColorForBackground} from "./Colors.js";
 declare const vex: any; //TODO
 declare const uuid: any; //TODO
 
+declare global {
+    interface Window {
+        PouchDB: any;
+    }
+}
+
 interface Note {
     id: string;
     x: number;
@@ -46,6 +52,7 @@ interface WhiteboardComponentData {
     isDragging: boolean;
     isDialogOpen: boolean;
     textMeasure: TextMeasurer;
+    db: any;
 }
 
 type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
@@ -94,7 +101,8 @@ Vue.component('whiteboard-component', {
             },
             isDragging: false,
             isDialogOpen: false,
-            textMeasure: new TextMeasurer()
+            textMeasure: new TextMeasurer(),
+            db: null,
         };
     },
     computed: {
@@ -258,6 +266,17 @@ Vue.component('whiteboard-component', {
                 textColor: textColor
             };
             this.notes.push(newNote);
+
+            // couchdb here
+            try {
+                await this.db.put({
+                    _id: newNote.id,
+                    ...newNote
+                });
+                console.log("Note saved to CouchDB");
+            } catch (error) {
+                console.error("Error saving note to CouchDB", error);
+            }
         },
 
         async addMulti(this: WhiteboardComponentInstance, event: MouseEvent) {
@@ -436,6 +455,14 @@ Vue.component('whiteboard-component', {
     },
 
     mounted(this: WhiteboardComponentInstance) {
+        const dbUrl = 'http://localhost:5984/my_database';
+        const docId = 'mydoc';
+        const username = 'admin';
+        const password = 'mypassword';
+
+        const db = new window.PouchDB(dbUrl, {skip_setup: true, auth: {username, password}});
+        this.db = db;
+
         this.$refs.whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);
 
