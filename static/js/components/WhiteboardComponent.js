@@ -344,12 +344,14 @@ Vue.component('whiteboard-component', {
         },
     },
     mounted() {
-        const dbUrl = 'http://localhost:5984/my_database';
-        const docId = 'mydoc';
+        const dbname = "my_database";
         const username = 'admin';
         const password = 'mypassword';
-        const db = new window.PouchDB(dbUrl, { skip_setup: true, auth: { username, password } });
-        this.db = db;
+        const dbUrl = `http://localhost:5984/${dbname}`;
+        const dbUrlWithAuth = `http://${username}:${password}@localhost:5984/${dbname}`;
+        const docId = 'mydoc';
+        this.db = new window.PouchDB(dbUrl, { skip_setup: true, auth: { username, password } });
+        initializeEventSource(dbname, username, password);
         this.$refs.whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);
         interact(this.$refs.svgContainer).draggable({
@@ -401,3 +403,32 @@ Vue.component('whiteboard-component', {
         </div>
     `
 });
+async function initializeEventSource(dbname, username, password) {
+    const dbUrl = `http://localhost:5984/${dbname}`;
+    // Create a session
+    const response = await fetch('http://localhost:5984/_session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `name=${username}&password=${password}`,
+        credentials: 'include'
+    });
+    if (!response.ok) {
+        throw new Error('Failed to create session');
+    }
+    const data = await response.json();
+    console.log('Session created', data);
+    // Now initialize EventSource
+    const changesUrl = `${dbUrl}/_changes?feed=eventsource&since=0&include_docs=true&heartbeat=10000&timeout=60000`;
+    const eventSource = new EventSource(changesUrl, { withCredentials: true });
+    eventSource.onmessage = (event) => {
+        console.log("message");
+        const change = JSON.parse(event.data);
+        console.log('Change detected:', change);
+    };
+    eventSource.onerror = (err) => {
+        console.error('Error detected:', err);
+        eventSource.close(); // Close the connection on error
+    };
+}

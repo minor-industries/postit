@@ -43,6 +43,11 @@ func run() error {
 
 	s := &server{db: db}
 
+	r.GET("/favicon.ico", func(c *gin.Context) {
+		c.Status(204)
+
+	})
+
 	r.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusTemporaryRedirect, "postit.html")
 	})
