@@ -190,12 +190,13 @@ Vue.component('whiteboard-component', {
         async runAction(this: WhiteboardComponentInstance) {
             const action = await textInput('action:', '');
             console.log("action:", action);
+            const selected = this.notes.filter(note => note.selected);
+
             switch (action) {
                 case "fix-width":
                     this.fixWidth();
                     return;
                 case "export":
-                    const selected = this.notes.filter(note => note.selected);
                     for (let i = 0; i < selected.length; i++) {
                         const note = selected[i];
                         await this.putNote(note);
@@ -203,6 +204,11 @@ Vue.component('whiteboard-component', {
                     return
                 case "load":
                     await this.loadNotes();
+                    return;
+                case "show":
+                    selected.forEach(note => {
+                        console.log(JSON.stringify(note, null, 2));
+                    })
                     return;
             }
         },
