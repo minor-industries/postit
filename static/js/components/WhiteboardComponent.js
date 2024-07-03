@@ -122,10 +122,7 @@ Vue.component('whiteboard-component', {
                     const selected = this.notes.filter(note => note.selected);
                     for (let i = 0; i < selected.length; i++) {
                         const note = selected[i];
-                        await this.db?.put({
-                            _id: note.id,
-                            ...note,
-                        });
+                        this.putNote(note);
                     }
                     return;
                 case "load":
@@ -192,20 +189,17 @@ Vue.component('whiteboard-component', {
                 selected: false,
                 isNoteDragging: false,
                 color: initialColor,
-                textColor: textColor
+                textColor: textColor,
             };
             this.notes.push(newNote);
-            // couchdb here
-            try {
-                await this.db.put({
-                    _id: newNote.id,
-                    ...newNote
-                });
-                console.log("Note saved to CouchDB");
-            }
-            catch (error) {
-                console.error("Error saving note to CouchDB", error);
-            }
+            await this.putNote(newNote);
+        },
+        async putNote(note) {
+            const { selected, isNoteDragging, ...toSave } = note;
+            await this.db.put({
+                _id: toSave.id,
+                ...toSave
+            });
         },
         async addMulti(event) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
