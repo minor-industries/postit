@@ -44,8 +44,9 @@ export class CouchClient {
 
             eventSource.onmessage = (event: MessageEvent) => {
                 console.log("message");
-                const change = JSON.parse(event.data);
-                console.log('Change detected:', change);
+                const change: CouchDBChangeResponse = JSON.parse(event.data);
+                console.log('Change detected');
+                console.log(JSON.stringify(change));
             };
 
             eventSource.onerror = (err: Event) => {
@@ -57,7 +58,22 @@ export class CouchClient {
     }
 
     async put(doc: any) {
-        throw new Error("not implemented")
+        const response = await fetch(`${this.url}/${this.dbname}/${doc._id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(doc),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to update document with id ${doc._id}`);
+        }
+
+        const data = await response.json();
+        console.log('Document updated:', data);
+        return data;
     }
 
     async loadDocs(): Promise<CouchDBAllDocsResponse> {
@@ -98,7 +114,22 @@ interface Row {
 interface Document {
     _id: string;
     _rev: string;
+    _deleted?: boolean;
 
     [key: string]: any;
 }
+
+interface CouchDBChangeResponse {
+    seq: string;
+    id: string;
+    changes: Change[];
+    doc: Document;
+    deleted?: boolean;
+}
+
+interface Change {
+    rev: string;
+}
+
+
 
