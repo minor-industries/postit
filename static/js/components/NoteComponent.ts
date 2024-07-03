@@ -16,6 +16,7 @@ interface Box {
 
 export interface Note {
     id: string;
+    _rev?: string;
     x: number;
     y: number;
     width: number;

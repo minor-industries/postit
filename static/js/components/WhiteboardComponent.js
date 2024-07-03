@@ -368,6 +368,7 @@ Vue.component('whiteboard-component', {
                     // TODO: can I use the note directly?
                     const newNote = {
                         id: doc.id,
+                        _rev: doc._rev,
                         text: doc.text,
                         x: doc.x,
                         y: doc.y,
