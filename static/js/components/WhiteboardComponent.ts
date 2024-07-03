@@ -454,7 +454,7 @@ Vue.component('whiteboard-component', {
         },
     },
 
-    mounted(this: WhiteboardComponentInstance) {
+    async mounted(this: WhiteboardComponentInstance) {
         const dbname = "my_database"
         const username = 'admin';
         const password = 'mypassword';
@@ -465,6 +465,20 @@ Vue.component('whiteboard-component', {
 
 
         this.db = new window.PouchDB(dbUrl, {skip_setup: true, auth: {username, password}});
+
+        try {
+            const allDocs = await this.db.allDocs({ include_docs: true });
+            console.log(allDocs);
+        } catch (e) {
+            console.log(e);
+        }
+
+        try {
+            const result = await this.db.info();
+            console.log("info:", result);
+        } catch (err) {
+            console.log(err);
+        }
 
         initializeEventSource(dbname, username, password);
 
