@@ -158,9 +158,9 @@ Vue.component('whiteboard-component', {
             } else if (event.key === 's') {
                 event.preventDefault();
                 await this.saveNotes();
-            } else if (event.key === 'l') {
-                event.preventDefault();
-                await this.loadNotes();
+                // } else if (event.key === 'l') {
+                //     event.preventDefault();
+                //     await this.loadNotes();
             } else if (event.key === 'd') {
                 event.preventDefault();
                 this.deleteSelectedNotes();
@@ -192,11 +192,25 @@ Vue.component('whiteboard-component', {
         },
 
         async runAction(this: WhiteboardComponentInstance) {
-            const action = await textInput('action:', 'fix-width');
+            const action = await textInput('action:', '');
             console.log("action:", action);
             switch (action) {
                 case "fix-width":
                     this.fixWidth();
+                    return;
+                case "export":
+                    const selected = this.notes.filter(note => note.selected);
+                    for (let i = 0; i < selected.length; i++) {
+                        const note = selected[i];
+                        await this.db?.put({
+                            _id: note.id,
+                            ...note,
+                        });
+                    }
+                    return
+                case "load":
+                    await this.loadNotes();
+                    return;
             }
         },
 
@@ -505,7 +519,7 @@ Vue.component('whiteboard-component', {
         });
 
         this.restoreZoomAndPan();
-        await this.loadNotes();
+        // await this.loadNotes();
 
         await this.db.connect();
         await this.db.subscribe();
