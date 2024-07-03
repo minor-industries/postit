@@ -2,9 +2,14 @@ export class CouchClient {
     private dbname = "my_database" //TODO
     private username = 'admin'; //TODO
     private password = 'mypassword'; //TODO
-    private url = 'http://localhost:5984'
+    private url = 'http://localhost:5984';
 
-    constructor() {
+    private readonly docs: { [key: string]: Document };
+    private readonly callback: (kind: string, doc: Document) => void;
+
+    constructor(callback: (kind: string, doc: Document) => void) {
+        this.docs = {};
+        this.callback = callback
     }
 
     async connect() {
@@ -47,6 +52,9 @@ export class CouchClient {
                 const change: CouchDBChangeResponse = JSON.parse(event.data);
                 console.log('Change detected');
                 console.log(JSON.stringify(change));
+
+                // TODO: update sequence number
+                this.updateDoc(change.doc);
             };
 
             eventSource.onerror = (err: Event) => {
@@ -55,6 +63,15 @@ export class CouchClient {
                 resolve(err); // TODO: think more about this
             };
         });
+    }
+
+    private updateDoc(doc: Document) {
+        const existing = this.docs[doc._id];
+        if (existing === undefined) {
+            this.docs[doc._id] = doc;
+            this.callback("new", doc);
+            return;
+        }
     }
 
     async put(doc: any) {
@@ -94,6 +111,11 @@ export class CouchClient {
         console.log(JSON.stringify(data));
         return data;
     }
+}
+
+function getDocRevision(doc: Document): number {
+    const partBeforeHyphen = doc._rev.split('-')[0];
+    return Number(partBeforeHyphen);
 }
 
 interface CouchDBAllDocsResponse {

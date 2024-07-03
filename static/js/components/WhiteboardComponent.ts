@@ -456,7 +456,9 @@ Vue.component('whiteboard-component', {
     },
 
     async mounted(this: WhiteboardComponentInstance) {
-        this.db = new CouchClient();
+        this.db = new CouchClient((kind, doc) => {
+            console.log("callback", kind, JSON.stringify(doc));
+        });
         try {
             await this.db.connect();
             await this.db.subscribe();
