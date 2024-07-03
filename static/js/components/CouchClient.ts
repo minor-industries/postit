@@ -69,9 +69,21 @@ export class CouchClient {
         const existing = this.docs[doc._id];
         if (existing === undefined) {
             this.docs[doc._id] = doc;
-            this.callback("new", doc);
+            const kind = doc._deleted ? "delete" : "new";
+            this.callback(kind, doc);
             return;
         }
+
+        const prevRev = getDocRevision(existing);
+        const newRev = getDocRevision(doc);
+
+        if (newRev <= prevRev) {
+            return;
+        }
+
+        this.docs[doc._id] = doc;
+        const kind = doc._deleted ? "delete" : "update";
+        this.callback(kind, doc);
     }
 
     async put(doc: any) {
@@ -109,6 +121,11 @@ export class CouchClient {
 
         const data: CouchDBAllDocsResponse = await response.json();
         console.log(JSON.stringify(data));
+
+        data.rows.forEach(row => {
+            this.updateDoc(row.doc);
+        })
+
         return data;
     }
 }
