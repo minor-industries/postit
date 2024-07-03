@@ -6,28 +6,16 @@ import {textInput} from "./EditNote.js";
 import {loadValue} from "./Api.js";
 import {getTextColorForBackground} from "./Colors.js";
 import {CouchClient, Document} from "./CouchClient.js";
+import {Note} from "./NoteComponent.js";
 
 declare const vex: any; //TODO
 declare const uuid: any; //TODO
+declare const interact: any // TODO
 
 declare global {
     interface Window {
         PouchDB: any;
     }
-}
-
-interface Note {
-    id: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    text: string;
-    color?: string;
-    textColor?: string;
-    selected?: boolean;
-    isNoteDragging?: boolean;
-    dirty?: boolean;
 }
 
 interface SvgPoint {
@@ -134,6 +122,7 @@ Vue.component('whiteboard-component', {
             for (let i = 0; i < dirty.length; i++) {
                 const note = dirty[i];
                 await this.putNote(note);
+                note.dirty = false;
             }
         },
 

@@ -1,4 +1,3 @@
-"use strict";
 /// <reference path="./vue-types.d.ts" />
 Vue.component('note-component', {
     props: ['note'],
@@ -54,6 +53,7 @@ Vue.component('note-component', {
                     if (event.shiftKey) {
                         return;
                     }
+                    this.note.dirty = true;
                     setTimeout(() => {
                         this.note.isNoteDragging = false;
                     }, 100);
@@ -63,3 +63,4 @@ Vue.component('note-component', {
         });
     },
 });
+export {};

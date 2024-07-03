@@ -1,3 +1,5 @@
+import {Note} from "./NoteComponent.js";
+
 export function nearbyColor(x: number, y: number, notes: Note[], defaultColor: string = 'white'): string {
     const colorSums: { [color: string]: number } = {};
 

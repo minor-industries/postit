@@ -14,7 +14,8 @@ interface Box {
     height: number;
 }
 
-interface Note {
+export interface Note {
+    id: string;
     x: number;
     y: number;
     width: number;
@@ -24,6 +25,7 @@ interface Note {
     textColor?: string;
     selected?: boolean;
     isNoteDragging?: boolean;
+    dirty?: boolean;
 }
 
 interface NoteComponentProps {
@@ -100,6 +102,7 @@ Vue.component('note-component', {
                     if (event.shiftKey) {
                         return;
                     }
+                    this.note.dirty = true;
                     setTimeout(() => {
                         this.note.isNoteDragging = false;
                     }, 100);

@@ -47,6 +47,7 @@ Vue.component('whiteboard-component', {
             for (let i = 0; i < dirty.length; i++) {
                 const note = dirty[i];
                 await this.putNote(note);
+                note.dirty = false;
             }
         },
         async loadNotes() {
