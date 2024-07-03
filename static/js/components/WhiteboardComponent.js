@@ -363,23 +363,40 @@ Vue.component('whiteboard-component', {
         },
         couchCallback(kind, doc) {
             console.log("callback", kind, JSON.stringify(doc));
+            // This seems like it will be brittle
+            const newNote = {
+                id: doc.id,
+                _rev: doc._rev,
+                text: doc.text,
+                x: doc.x,
+                y: doc.y,
+                width: doc.width,
+                height: doc.height,
+                color: doc.color,
+                textColor: doc.textColor,
+            };
             switch (kind) {
                 case "new":
-                    // TODO: can I use the note directly?
-                    const newNote = {
-                        id: doc.id,
-                        _rev: doc._rev,
-                        text: doc.text,
-                        x: doc.x,
-                        y: doc.y,
-                        width: doc.width,
-                        height: doc.height,
-                        color: doc.color,
-                        textColor: doc.textColor,
-                        selected: false,
-                        isNoteDragging: false,
-                    };
-                    this.notes.push(newNote);
+                case "update":
+                    const found = this.notes.filter(note => note.id === newNote.id);
+                    if (found.length > 1) {
+                        throw new Error("found more than one note with the same id");
+                    }
+                    if (found.length == 0) {
+                        this.notes.push(newNote);
+                        break;
+                    }
+                    const existing = found[0];
+                    Object.keys(doc).forEach(key => {
+                        if (existing.hasOwnProperty(key)) {
+                            if (existing[key] !== newNote[key]) {
+                                existing[key] = newNote[key]; // Update existing properties only if the value has changed
+                            }
+                        }
+                        else {
+                            this.$set(existing, key, doc[key]); // Add new properties reactively
+                        }
+                    });
                     break;
             }
         },

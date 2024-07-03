@@ -78,6 +78,7 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
         selectionBox: any; // Adjust the type based on the actual type of selectionBox
         [key: string]: any; // To handle dynamic refs
     };
+    $set: any; //TODO?
 };
 
 Vue.component('whiteboard-component', {
@@ -475,24 +476,45 @@ Vue.component('whiteboard-component', {
         couchCallback(this: WhiteboardComponentInstance, kind: string, doc: Document) {
             console.log("callback", kind, JSON.stringify(doc));
 
+            // SHOULD I SIMPLY USE THE RAW COUCH OBJECT?
+
+            // This seems like it will be brittle
+            const newNote: Note = {
+                id: doc.id,
+                _rev: doc._rev,
+                text: doc.text,
+                x: doc.x,
+                y: doc.y,
+                width: doc.width,
+                height: doc.height,
+                color: doc.color,
+                textColor: doc.textColor,
+            };
+
+
             switch (kind) {
                 case "new":
-                    // TODO: can I use the note directly?
-                    const newNote: Note = {
-                        id: doc.id,
-                        _rev: doc._rev,
-                        text: doc.text,
-                        x: doc.x,
-                        y: doc.y,
-                        width: doc.width,
-                        height: doc.height,
-                        color: doc.color,
-                        textColor: doc.textColor,
+                case "update":
+                    const found = this.notes.filter(note => note.id === newNote.id);
+                    if (found.length > 1) {
+                        throw new Error("found more than one note with the same id");
+                    }
 
-                        selected: false,
-                        isNoteDragging: false,
-                    };
-                    this.notes.push(newNote);
+                    if (found.length == 0) {
+                        this.notes.push(newNote);
+                        break;
+                    }
+
+                    const existing = found[0];
+                    Object.keys(doc).forEach(key => {
+                        if (existing.hasOwnProperty(key)) {
+                            if ((existing as any)[key] !== (newNote as any)[key]) {
+                                (existing as any)[key] = (newNote as any)[key]; // Update existing properties only if the value has changed
+                            }
+                        } else {
+                            this.$set(existing, key, doc[key]); // Add new properties reactively
+                        }
+                    });
                     break;
             }
         },
