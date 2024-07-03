@@ -5,6 +5,7 @@ import {changeNoteColor} from "./ColorChanger.js";
 import {textInput} from "./EditNote.js";
 import {loadValue, saveValue} from "./Api.js";
 import {getTextColorForBackground} from "./Colors.js";
+import {CouchClient} from "./CouchClient.js";
 
 declare const vex: any; //TODO
 declare const uuid: any; //TODO
@@ -52,7 +53,7 @@ interface WhiteboardComponentData {
     isDragging: boolean;
     isDialogOpen: boolean;
     textMeasure: TextMeasurer;
-    db: any;
+    db: CouchClient | null;
 }
 
 type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
@@ -269,7 +270,7 @@ Vue.component('whiteboard-component', {
 
             // couchdb here
             try {
-                await this.db.put({
+                await this.db!.put({
                     _id: newNote.id,
                     ...newNote
                 });
@@ -455,32 +456,14 @@ Vue.component('whiteboard-component', {
     },
 
     async mounted(this: WhiteboardComponentInstance) {
-        const dbname = "my_database"
-        const username = 'admin';
-        const password = 'mypassword';
-
-        const dbUrl = `http://localhost:5984/${dbname}`;
-        const dbUrlWithAuth = `http://${username}:${password}@localhost:5984/${dbname}`
-        const docId = 'mydoc';
-
-
-        this.db = new window.PouchDB(dbUrl, {skip_setup: true, auth: {username, password}});
-
+        this.db = new CouchClient();
         try {
-            const allDocs = await this.db.allDocs({ include_docs: true });
-            console.log(allDocs);
+            await this.db.connect();
+            await this.db.subscribe();
+            await this.db.loadDocs();
         } catch (e) {
-            console.log(e);
+            console.log(`couch error: ${e}`);
         }
-
-        try {
-            const result = await this.db.info();
-            console.log("info:", result);
-        } catch (err) {
-            console.log(err);
-        }
-
-        initializeEventSource(dbname, username, password);
 
         this.$refs.whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);
@@ -537,43 +520,3 @@ Vue.component('whiteboard-component', {
         </div>
     `
 });
-
-async function initializeEventSource(
-    dbname: string,
-    username: string,
-    password: string,
-) {
-    const dbUrl = `http://localhost:5984/${dbname}`;
-
-    // Create a session
-    const response = await fetch('http://localhost:5984/_session', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `name=${username}&password=${password}`,
-        credentials: 'include'
-    });
-
-    if (!response.ok) {
-        throw new Error('Failed to create session');
-    }
-
-    const data = await response.json();
-    console.log('Session created', data);
-
-    // Now initialize EventSource
-    const changesUrl = `${dbUrl}/_changes?feed=eventsource&since=0&include_docs=true&heartbeat=10000&timeout=60000`;
-    const eventSource = new EventSource(changesUrl, {withCredentials: true});
-
-    eventSource.onmessage = (event: MessageEvent) => {
-        console.log("message");
-        const change = JSON.parse(event.data);
-        console.log('Change detected:', change);
-    };
-
-    eventSource.onerror = (err: Event) => {
-        console.error('Error detected:', err);
-        eventSource.close(); // Close the connection on error
-    };
-}
