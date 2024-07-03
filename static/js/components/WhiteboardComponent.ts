@@ -5,7 +5,7 @@ import {changeNoteColor} from "./ColorChanger.js";
 import {textInput} from "./EditNote.js";
 import {loadValue, saveValue} from "./Api.js";
 import {getTextColorForBackground} from "./Colors.js";
-import {CouchClient} from "./CouchClient.js";
+import {CouchClient, Document} from "./CouchClient.js";
 
 declare const vex: any; //TODO
 declare const uuid: any; //TODO
@@ -456,7 +456,7 @@ Vue.component('whiteboard-component', {
     },
 
     async mounted(this: WhiteboardComponentInstance) {
-        this.db = new CouchClient((kind, doc) => {
+        this.db = new CouchClient((kind: string, doc: Document) => {
             console.log("callback", kind, JSON.stringify(doc));
         });
         try {

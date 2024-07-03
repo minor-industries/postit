@@ -150,7 +150,7 @@ interface Row {
     doc: Document;
 }
 
-interface Document {
+export interface Document {
     _id: string;
     _rev: string;
     _deleted?: boolean;
