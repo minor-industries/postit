@@ -363,6 +363,7 @@ Vue.component('whiteboard-component', {
         },
         couchCallback(kind, doc) {
             console.log("callback", kind, JSON.stringify(doc));
+            // SHOULD I SIMPLY USE THE RAW COUCH OBJECT?
             // This seems like it will be brittle
             const newNote = {
                 id: doc.id,
@@ -383,7 +384,12 @@ Vue.component('whiteboard-component', {
                         throw new Error("found more than one note with the same id");
                     }
                     if (found.length == 0) {
-                        this.notes.push(newNote);
+                        this.notes.push({
+                            selected: false,
+                            isNoteDragging: false,
+                            dirty: false,
+                            ...newNote,
+                        });
                         break;
                     }
                     const existing = found[0];

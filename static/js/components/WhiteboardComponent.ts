@@ -491,7 +491,6 @@ Vue.component('whiteboard-component', {
                 textColor: doc.textColor,
             };
 
-
             switch (kind) {
                 case "new":
                 case "update":
@@ -501,7 +500,12 @@ Vue.component('whiteboard-component', {
                     }
 
                     if (found.length == 0) {
-                        this.notes.push(newNote);
+                        this.notes.push({
+                            selected: false,
+                            isNoteDragging: false,
+                            dirty: false,
+                            ...newNote,
+                        });
                         break;
                     }
 
