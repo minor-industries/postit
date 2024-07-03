@@ -343,19 +343,32 @@ Vue.component('whiteboard-component', {
                 this.pan.translateY = parseFloat(storedPanTranslateY);
             }
         },
+        couchCallback(kind, doc) {
+            console.log("callback", kind, JSON.stringify(doc));
+            switch (kind) {
+                case "new":
+                    // TODO: can I use the note directly?
+                    const newNote = {
+                        id: doc.id,
+                        text: doc.text,
+                        x: doc.x,
+                        y: doc.y,
+                        width: doc.width,
+                        height: doc.height,
+                        color: doc.color,
+                        textColor: doc.textColor,
+                        selected: false,
+                        isNoteDragging: false,
+                    };
+                    this.notes.push(newNote);
+                    break;
+            }
+        },
     },
     async mounted() {
         this.db = new CouchClient((kind, doc) => {
-            console.log("callback", kind, JSON.stringify(doc));
+            this.couchCallback(kind, doc);
         });
-        try {
-            await this.db.connect();
-            await this.db.subscribe();
-            await this.db.loadDocs();
-        }
-        catch (e) {
-            console.log(`couch error: ${e}`);
-        }
         this.$refs.whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);
         interact(this.$refs.svgContainer).draggable({
@@ -374,7 +387,10 @@ Vue.component('whiteboard-component', {
             }
         });
         this.restoreZoomAndPan();
-        this.loadNotes();
+        await this.loadNotes();
+        await this.db.connect();
+        await this.db.subscribe();
+        await this.db.loadDocs();
     },
     beforeDestroy() {
         window.removeEventListener('keydown', this.handleKeydown);
