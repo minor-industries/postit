@@ -3,7 +3,7 @@
 import {nearbyColor, TextMeasurer} from "./Util.js";
 import {changeNoteColor} from "./ColorChanger.js";
 import {textInput} from "./EditNote.js";
-import {loadValue, saveValue} from "./Api.js";
+import {loadValue} from "./Api.js";
 import {getTextColorForBackground} from "./Colors.js";
 import {CouchClient, Document} from "./CouchClient.js";
 
@@ -27,6 +27,7 @@ interface Note {
     textColor?: string;
     selected?: boolean;
     isNoteDragging?: boolean;
+    dirty?: boolean;
 }
 
 interface SvgPoint {
@@ -82,7 +83,7 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     fixWidth(): void;
     calcWidth(text: string): number;
     couchCallback(kind: string, doc: Document): void;
-    putNote(note: Note): void;
+    putNote(note: Note): Promise<void>;
     $refs: {
         whiteboard: HTMLDivElement;
         svgContainer: SVGSVGElement;
@@ -128,7 +129,12 @@ Vue.component('whiteboard-component', {
     methods: {
         async saveNotes(this: WhiteboardComponentInstance) {
             console.log("save notes");
-            await saveValue("notes", JSON.stringify(this.notes));
+            // await saveValue("notes", JSON.stringify(this.notes));
+            const dirty = this.notes.filter(note => note.dirty);
+            for (let i = 0; i < dirty.length; i++) {
+                const note = dirty[i];
+                await this.putNote(note);
+            }
         },
 
         async loadNotes(this: WhiteboardComponentInstance) {
@@ -203,7 +209,7 @@ Vue.component('whiteboard-component', {
                     const selected = this.notes.filter(note => note.selected);
                     for (let i = 0; i < selected.length; i++) {
                         const note = selected[i];
-                        this.putNote(note);
+                        await this.putNote(note);
                     }
                     return
                 case "load":
@@ -278,16 +284,16 @@ Vue.component('whiteboard-component', {
                 isNoteDragging: false,
                 color: initialColor,
                 textColor: textColor,
+                dirty: true,
             };
             this.notes.push(newNote);
-
-            await this.putNote(newNote);
         },
 
         async putNote(this: WhiteboardComponentInstance, note: Note) {
             const {
                 selected,
                 isNoteDragging,
+                dirty,
                 ...toSave
             } = note;
 

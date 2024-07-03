@@ -2,7 +2,7 @@
 import { nearbyColor, TextMeasurer } from "./Util.js";
 import { changeNoteColor } from "./ColorChanger.js";
 import { textInput } from "./EditNote.js";
-import { loadValue, saveValue } from "./Api.js";
+import { loadValue } from "./Api.js";
 import { getTextColorForBackground } from "./Colors.js";
 import { CouchClient } from "./CouchClient.js";
 Vue.component('whiteboard-component', {
@@ -42,7 +42,12 @@ Vue.component('whiteboard-component', {
     methods: {
         async saveNotes() {
             console.log("save notes");
-            await saveValue("notes", JSON.stringify(this.notes));
+            // await saveValue("notes", JSON.stringify(this.notes));
+            const dirty = this.notes.filter(note => note.dirty);
+            for (let i = 0; i < dirty.length; i++) {
+                const note = dirty[i];
+                await this.putNote(note);
+            }
         },
         async loadNotes() {
             const json = await loadValue("notes");
@@ -122,7 +127,7 @@ Vue.component('whiteboard-component', {
                     const selected = this.notes.filter(note => note.selected);
                     for (let i = 0; i < selected.length; i++) {
                         const note = selected[i];
-                        this.putNote(note);
+                        await this.putNote(note);
                     }
                     return;
                 case "load":
@@ -190,12 +195,12 @@ Vue.component('whiteboard-component', {
                 isNoteDragging: false,
                 color: initialColor,
                 textColor: textColor,
+                dirty: true,
             };
             this.notes.push(newNote);
-            await this.putNote(newNote);
         },
         async putNote(note) {
-            const { selected, isNoteDragging, ...toSave } = note;
+            const { selected, isNoteDragging, dirty, ...toSave } = note;
             await this.db.put({
                 _id: toSave.id,
                 ...toSave
