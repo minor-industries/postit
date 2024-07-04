@@ -72,6 +72,7 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     calcWidth(text: string): number;
     couchCallback(kind: string, doc: Document): void;
     putNote(note: Note): Promise<void>;
+    pushNewNote(note: Note): void;
     $refs: {
         whiteboard: HTMLDivElement;
         svgContainer: SVGSVGElement;
@@ -276,13 +277,10 @@ Vue.component('whiteboard-component', {
                 y: adjustedY - 25,
                 width: this.calcWidth(newText),
                 height: 50,
-                selected: false,
-                isNoteDragging: false,
                 color: initialColor,
                 textColor: textColor,
-                dirty: true,
             };
-            this.notes.push(newNote);
+            this.pushNewNote(newNote);
         },
 
         async putNote(this: WhiteboardComponentInstance, note: Note) {
@@ -312,20 +310,19 @@ Vue.component('whiteboard-component', {
             let x = (svgPoint.x - this.pan.translateX) / this.zoom.level - 50;
 
             lines.forEach((line, index) => {
+                let text = line.trim();
                 const newNote: Note = {
                     id: uuid.v4(),
-                    text: line,
+                    text: text,
                     x: x,
                     y: currentY,
-                    width: this.calcWidth(newText),
+                    width: this.calcWidth(text),
                     height: 50,
-                    selected: false,
-                    isNoteDragging: false,
                     color: "yellow",
                     textColor: "black"
                 };
 
-                this.notes.push(newNote);
+                this.pushNewNote(newNote)
                 currentY += 60
             });
         },
@@ -473,6 +470,15 @@ Vue.component('whiteboard-component', {
             }
         },
 
+        pushNewNote(this: WhiteboardComponentInstance, note: Note) {
+            this.notes.push({
+                selected: false,
+                isNoteDragging: false,
+                dirty: true,
+                ...note,
+            });
+        },
+
         couchCallback(this: WhiteboardComponentInstance, kind: string, doc: Document) {
             console.log("callback", kind, JSON.stringify(doc));
 
@@ -500,12 +506,7 @@ Vue.component('whiteboard-component', {
                     }
 
                     if (found.length == 0) {
-                        this.notes.push({
-                            selected: false,
-                            isNoteDragging: false,
-                            dirty: false,
-                            ...newNote,
-                        });
+                        this.pushNewNote(newNote);
                         break;
                     }
 

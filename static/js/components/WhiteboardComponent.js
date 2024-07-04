@@ -197,13 +197,10 @@ Vue.component('whiteboard-component', {
                 y: adjustedY - 25,
                 width: this.calcWidth(newText),
                 height: 50,
-                selected: false,
-                isNoteDragging: false,
                 color: initialColor,
                 textColor: textColor,
-                dirty: true,
             };
-            this.notes.push(newNote);
+            this.pushNewNote(newNote);
         },
         async putNote(note) {
             const { selected, isNoteDragging, dirty, ...toSave } = note;
@@ -222,19 +219,18 @@ Vue.component('whiteboard-component', {
             let currentY = (svgPoint.y - this.pan.translateY) / this.zoom.level;
             let x = (svgPoint.x - this.pan.translateX) / this.zoom.level - 50;
             lines.forEach((line, index) => {
+                let text = line.trim();
                 const newNote = {
                     id: uuid.v4(),
-                    text: line,
+                    text: text,
                     x: x,
                     y: currentY,
-                    width: this.calcWidth(newText),
+                    width: this.calcWidth(text),
                     height: 50,
-                    selected: false,
-                    isNoteDragging: false,
                     color: "yellow",
                     textColor: "black"
                 };
-                this.notes.push(newNote);
+                this.pushNewNote(newNote);
                 currentY += 60;
             });
         },
@@ -361,6 +357,14 @@ Vue.component('whiteboard-component', {
                 this.pan.translateY = parseFloat(storedPanTranslateY);
             }
         },
+        pushNewNote(note) {
+            this.notes.push({
+                selected: false,
+                isNoteDragging: false,
+                dirty: true,
+                ...note,
+            });
+        },
         couchCallback(kind, doc) {
             console.log("callback", kind, JSON.stringify(doc));
             // SHOULD I SIMPLY USE THE RAW COUCH OBJECT?
@@ -384,12 +388,7 @@ Vue.component('whiteboard-component', {
                         throw new Error("found more than one note with the same id");
                     }
                     if (found.length == 0) {
-                        this.notes.push({
-                            selected: false,
-                            isNoteDragging: false,
-                            dirty: false,
-                            ...newNote,
-                        });
+                        this.pushNewNote(newNote);
                         break;
                     }
                     const existing = found[0];
