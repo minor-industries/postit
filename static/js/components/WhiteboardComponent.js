@@ -29,7 +29,7 @@ Vue.component('whiteboard-component', {
     },
     watch: {
         'zoom.level'(newZoomLevel) {
-            console.log("zoomlevel");
+            // console.log("zoomlevel");
             sessionStorage.setItem('zoomLevel', newZoomLevel.toString());
         },
         'pan.translateX'(newTranslateX) {
@@ -41,12 +41,12 @@ Vue.component('whiteboard-component', {
     },
     methods: {
         async saveNotes() {
-            console.log("save notes");
+            // console.log("save notes");
             // await saveValue("notes", JSON.stringify(this.notes));
             const dirty = this.notes.filter(note => note.dirty);
             for (let i = 0; i < dirty.length; i++) {
                 const note = dirty[i];
-                console.log('saving', note.id);
+                // console.log('saving', note.id);
                 await this.putNote(note);
                 note.dirty = false;
             }
@@ -113,7 +113,7 @@ Vue.component('whiteboard-component', {
         },
         async runAction() {
             const action = await textInput('action:', '');
-            console.log("action:", action);
+            // console.log("action:", action);
             const selected = this.notes.filter(note => note.selected);
             switch (action) {
                 case "fix-width":
@@ -130,7 +130,7 @@ Vue.component('whiteboard-component', {
                     return;
                 case "show":
                     selected.forEach(note => {
-                        console.log(JSON.stringify(note, null, 2));
+                        // console.log(JSON.stringify(note, null, 2));
                     });
                     return;
             }
@@ -165,7 +165,7 @@ Vue.component('whiteboard-component', {
             }
             const note = selectedNotes[0];
             const newText = await textInput('Edit Note Text', note.text);
-            console.log(newText);
+            // console.log(newText);
             if (newText === null) {
                 return;
             }
@@ -198,7 +198,7 @@ Vue.component('whiteboard-component', {
         },
         async putNote(note) {
             const { selected, isNoteDragging, dirty, ...toSave } = note;
-            console.log("putting", toSave.id, toSave.hasOwnProperty("_id"));
+            // console.log("putting", toSave.id, toSave.hasOwnProperty("_id"));
             await this.db.put({
                 ...toSave,
                 _id: toSave.id,
@@ -292,7 +292,7 @@ Vue.component('whiteboard-component', {
                     note.y + note.height >= selectionBox.y &&
                     note.y <= selectionBox.y + selectionBox.height);
                 if (selected) {
-                    console.log("selected2", note.text);
+                    // console.log("selected2", note.text);
                 }
                 note.selected = selected;
             });
@@ -303,7 +303,7 @@ Vue.component('whiteboard-component', {
             });
         },
         handleNoteDragEnd() {
-            console.log("drag end");
+            // console.log("drag end");
             this.isDragging = false;
         },
         unselectAllNotes() {
@@ -360,7 +360,7 @@ Vue.component('whiteboard-component', {
                 ...baseNote,
             };
             this.notes.push(note);
-            console.log("watch");
+            // console.log("watch");
             this.$watch(() => [
                 note.x,
                 note.y,
@@ -370,12 +370,12 @@ Vue.component('whiteboard-component', {
                 note.color,
                 note.textColor,
             ], () => {
-                console.log(baseNote.text, "dirtied");
+                // console.log(baseNote.text, "dirtied");
                 note.dirty = true;
             });
         },
         couchCallback(kind, doc) {
-            console.log("callback", kind, JSON.stringify(doc));
+            // console.log("callback", kind, JSON.stringify(doc));
             // SHOULD I SIMPLY USE THE RAW COUCH OBJECT?
             // This seems like it will be brittle
             const newNote = {
@@ -413,7 +413,7 @@ Vue.component('whiteboard-component', {
                         }
                     });
                     const keys = Object.keys(existing).filter(k => existing.hasOwnProperty(k)).join(", ");
-                    console.log("keys:", keys);
+                    // // console.log("keys:", keys);
                     break;
             }
         },

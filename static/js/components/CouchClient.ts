@@ -27,7 +27,7 @@ export class CouchClient {
         }
 
         const data = await response.json();
-        console.log('Session created', data);
+        // console.log('Session created', data);
     }
 
     subscribe() {
@@ -48,10 +48,10 @@ export class CouchClient {
             }
 
             eventSource.onmessage = (event: MessageEvent) => {
-                console.log("message");
+                // console.log("message");
                 const change: CouchDBChangeResponse = JSON.parse(event.data);
-                console.log('Change detected');
-                console.log(JSON.stringify(change));
+                // console.log('Change detected');
+                // console.log(JSON.stringify(change));
 
                 // TODO: update sequence number
                 this.updateDoc(change.doc);
@@ -91,7 +91,7 @@ export class CouchClient {
             throw new Error(`doc._id is not string`);
         }
 
-        console.log("put", doc._id, JSON.stringify(doc));
+        // console.log("put", doc._id, JSON.stringify(doc));
         const response = await fetch(`${this.url}/${this.dbname}/${doc._id}`, {
             method: 'PUT',
             headers: {
@@ -106,7 +106,7 @@ export class CouchClient {
         }
 
         const data = await response.json();
-        console.log('Document updated:', data);
+        // console.log('Document updated:', data);
         return data;
     }
 
@@ -125,7 +125,7 @@ export class CouchClient {
         }
 
         const data: CouchDBAllDocsResponse = await response.json();
-        console.log(JSON.stringify(data));
+        // console.log(JSON.stringify(data));
 
         data.rows.forEach(row => {
             this.updateDoc(row.doc);
