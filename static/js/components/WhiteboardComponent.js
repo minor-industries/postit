@@ -46,20 +46,14 @@ Vue.component('whiteboard-component', {
             const dirty = this.notes.filter(note => note.dirty);
             for (let i = 0; i < dirty.length; i++) {
                 const note = dirty[i];
+                console.log('saving', note.id);
                 await this.putNote(note);
                 note.dirty = false;
             }
         },
         async loadNotes() {
             const json = await loadValue("notes");
-            let notes = JSON.parse(json.value);
-            notes.forEach(note => {
-                if (!note.color) {
-                    note.color = "yellow";
-                    note.textColor = "black";
-                }
-            });
-            this.notes = notes;
+            this.notes = JSON.parse(json.value);
         },
         async handleKeydown(event) {
             const target = event.target;
@@ -200,13 +194,14 @@ Vue.component('whiteboard-component', {
                 color: initialColor,
                 textColor: textColor,
             };
-            this.pushNewNote(newNote);
+            this.pushNewNote(newNote, true);
         },
         async putNote(note) {
             const { selected, isNoteDragging, dirty, ...toSave } = note;
+            console.log("putting", toSave.id, toSave.hasOwnProperty("_id"));
             await this.db.put({
+                ...toSave,
                 _id: toSave.id,
-                ...toSave
             });
         },
         async addMulti(event) {
@@ -230,7 +225,7 @@ Vue.component('whiteboard-component', {
                     color: "yellow",
                     textColor: "black"
                 };
-                this.pushNewNote(newNote);
+                this.pushNewNote(newNote, true);
                 currentY += 60;
             });
         },
@@ -357,12 +352,26 @@ Vue.component('whiteboard-component', {
                 this.pan.translateY = parseFloat(storedPanTranslateY);
             }
         },
-        pushNewNote(note) {
-            this.notes.push({
+        pushNewNote(baseNote, dirty) {
+            let note = {
                 selected: false,
                 isNoteDragging: false,
-                dirty: true,
-                ...note,
+                dirty: dirty,
+                ...baseNote,
+            };
+            this.notes.push(note);
+            console.log("watch");
+            this.$watch(() => [
+                note.x,
+                note.y,
+                note.width,
+                note.height,
+                note.text,
+                note.color,
+                note.textColor,
+            ], () => {
+                console.log(baseNote.text, "dirtied");
+                note.dirty = true;
             });
         },
         couchCallback(kind, doc) {
@@ -388,9 +397,10 @@ Vue.component('whiteboard-component', {
                         throw new Error("found more than one note with the same id");
                     }
                     if (found.length == 0) {
-                        this.pushNewNote(newNote);
+                        this.pushNewNote(newNote, false);
                         break;
                     }
+                    // TODO: perhaps after getting an update from the server we might unset the dirty flag?
                     const existing = found[0];
                     Object.keys(doc).forEach(key => {
                         if (existing.hasOwnProperty(key)) {

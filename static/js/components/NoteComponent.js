@@ -53,7 +53,6 @@ Vue.component('note-component', {
                     if (event.shiftKey) {
                         return;
                     }
-                    this.note.dirty = true;
                     setTimeout(() => {
                         this.note.isNoteDragging = false;
                     }, 100);

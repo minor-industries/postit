@@ -87,6 +87,11 @@ export class CouchClient {
     }
 
     async put(doc: any) {
+        if (typeof doc._id !== 'string') {
+            throw new Error(`doc._id is not string`);
+        }
+
+        console.log("put", doc._id, JSON.stringify(doc));
         const response = await fetch(`${this.url}/${this.dbname}/${doc._id}`, {
             method: 'PUT',
             headers: {

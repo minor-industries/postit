@@ -72,7 +72,7 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     calcWidth(text: string): number;
     couchCallback(kind: string, doc: Document): void;
     putNote(note: Note): Promise<void>;
-    pushNewNote(note: Note): void;
+    pushNewNote(note: Note, dirty: boolean): void;
     $refs: {
         whiteboard: HTMLDivElement;
         svgContainer: SVGSVGElement;
@@ -80,6 +80,7 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
         [key: string]: any; // To handle dynamic refs
     };
     $set: any; //TODO?
+    $watch: any; //TODO?
 };
 
 Vue.component('whiteboard-component', {
@@ -123,6 +124,7 @@ Vue.component('whiteboard-component', {
             const dirty = this.notes.filter(note => note.dirty);
             for (let i = 0; i < dirty.length; i++) {
                 const note = dirty[i];
+                console.log('saving', note.id);
                 await this.putNote(note);
                 note.dirty = false;
             }
@@ -130,14 +132,7 @@ Vue.component('whiteboard-component', {
 
         async loadNotes(this: WhiteboardComponentInstance) {
             const json = await loadValue("notes");
-            let notes: Note[] = JSON.parse(json.value);
-            notes.forEach(note => {
-                if (!note.color) {
-                    note.color = "yellow";
-                    note.textColor = "black";
-                }
-            });
-            this.notes = notes;
+            this.notes = JSON.parse(json.value);
         },
 
         async handleKeydown(this: WhiteboardComponentInstance, event: KeyboardEvent) {
@@ -280,7 +275,7 @@ Vue.component('whiteboard-component', {
                 color: initialColor,
                 textColor: textColor,
             };
-            this.pushNewNote(newNote);
+            this.pushNewNote(newNote, true);
         },
 
         async putNote(this: WhiteboardComponentInstance, note: Note) {
@@ -291,9 +286,10 @@ Vue.component('whiteboard-component', {
                 ...toSave
             } = note;
 
+            console.log("putting", toSave.id, toSave.hasOwnProperty("_id"));
             await this.db!.put({
+                ...toSave,
                 _id: toSave.id,
-                ...toSave
             });
         },
 
@@ -322,7 +318,7 @@ Vue.component('whiteboard-component', {
                     textColor: "black"
                 };
 
-                this.pushNewNote(newNote)
+                this.pushNewNote(newNote, true)
                 currentY += 60
             });
         },
@@ -470,12 +466,27 @@ Vue.component('whiteboard-component', {
             }
         },
 
-        pushNewNote(this: WhiteboardComponentInstance, note: Note) {
-            this.notes.push({
+        pushNewNote(this: WhiteboardComponentInstance, baseNote: Note, dirty: boolean) {
+            let note = {
                 selected: false,
                 isNoteDragging: false,
-                dirty: true,
-                ...note,
+                dirty: dirty,
+                ...baseNote,
+            };
+            this.notes.push(note);
+
+            console.log("watch");
+            this.$watch(() => [
+                note.x,
+                note.y,
+                note.width,
+                note.height,
+                note.text,
+                note.color,
+                note.textColor,
+            ], () => {
+                console.log(baseNote.text, "dirtied");
+                note.dirty = true;
             });
         },
 
@@ -506,10 +517,11 @@ Vue.component('whiteboard-component', {
                     }
 
                     if (found.length == 0) {
-                        this.pushNewNote(newNote);
+                        this.pushNewNote(newNote, false);
                         break;
                     }
 
+                    // TODO: perhaps after getting an update from the server we might unset the dirty flag?
                     const existing = found[0];
                     Object.keys(doc).forEach(key => {
                         if (existing.hasOwnProperty(key)) {

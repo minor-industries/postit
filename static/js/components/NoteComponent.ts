@@ -22,8 +22,8 @@ export interface Note {
     width: number;
     height: number;
     text: string;
-    color?: string;
-    textColor?: string;
+    color: string;
+    textColor: string;
     selected?: boolean;
     isNoteDragging?: boolean;
     dirty?: boolean;
@@ -103,7 +103,6 @@ Vue.component('note-component', {
                     if (event.shiftKey) {
                         return;
                     }
-                    this.note.dirty = true;
                     setTimeout(() => {
                         this.note.isNoteDragging = false;
                     }, 100);
