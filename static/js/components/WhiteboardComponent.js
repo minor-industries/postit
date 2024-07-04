@@ -402,16 +402,18 @@ Vue.component('whiteboard-component', {
                     }
                     // TODO: perhaps after getting an update from the server we might unset the dirty flag?
                     const existing = found[0];
-                    Object.keys(doc).forEach(key => {
+                    Object.keys(newNote).forEach(key => {
                         if (existing.hasOwnProperty(key)) {
                             if (existing[key] !== newNote[key]) {
                                 existing[key] = newNote[key]; // Update existing properties only if the value has changed
                             }
                         }
                         else {
-                            this.$set(existing, key, doc[key]); // Add new properties reactively
+                            this.$set(existing, key, newNote[key]); // Add new properties reactively
                         }
                     });
+                    const keys = Object.keys(existing).filter(k => existing.hasOwnProperty(k)).join(", ");
+                    console.log("keys:", keys);
                     break;
             }
         },
