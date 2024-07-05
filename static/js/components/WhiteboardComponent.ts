@@ -568,7 +568,7 @@ Vue.component('whiteboard-component', {
         this.restoreZoomAndPan();
         // await this.loadNotes();
 
-        // await this.db.connect();
+        // await this.db.connect(); // connecting through proxy so not needed
         await this.db.subscribe();
         await this.db.loadDocs();
     },
