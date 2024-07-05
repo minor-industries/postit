@@ -130,7 +130,7 @@ Vue.component('whiteboard-component', {
                     return;
                 case "show":
                     selected.forEach(note => {
-                        // console.log(JSON.stringify(note, null, 2));
+                        console.log(JSON.stringify(note, null, 2));
                     });
                     return;
             }
@@ -389,13 +389,13 @@ Vue.component('whiteboard-component', {
                 color: doc.color,
                 textColor: doc.textColor,
             };
+            const found = this.notes.filter(note => note.id === newNote.id);
+            if (found.length > 1) {
+                throw new Error("found more than one note with the same id");
+            }
             switch (kind) {
                 case "new":
                 case "update":
-                    const found = this.notes.filter(note => note.id === newNote.id);
-                    if (found.length > 1) {
-                        throw new Error("found more than one note with the same id");
-                    }
                     if (found.length == 0) {
                         this.pushNewNote(newNote, false);
                         break;
@@ -414,6 +414,14 @@ Vue.component('whiteboard-component', {
                     });
                     const keys = Object.keys(existing).filter(k => existing.hasOwnProperty(k)).join(", ");
                     // // console.log("keys:", keys);
+                    break;
+                case "delete":
+                    console.log("delete");
+                    console.log(this.notes.length);
+                    console.log(newNote.id);
+                    console.log(found.length);
+                    this.notes = this.notes.filter(note => note.id !== doc._id);
+                    console.log(this.notes.length);
                     break;
             }
         },
