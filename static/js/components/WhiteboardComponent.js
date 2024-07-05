@@ -9,6 +9,7 @@ Vue.component('whiteboard-component', {
     data() {
         return {
             notes: [],
+            toDelete: [],
             zoom: {
                 level: 1,
             },
@@ -50,6 +51,15 @@ Vue.component('whiteboard-component', {
                 await this.putNote(note);
                 note.dirty = false;
             }
+            for (let i = 0; i < this.toDelete.length; i++) {
+                const note = this.toDelete[i];
+                console.log(note.text, note._rev);
+                if (note._rev === undefined) {
+                    continue; // this probably hasn't been stored to couch yet
+                }
+                await this.db.delete(note);
+            }
+            this.toDelete = [];
         },
         async loadNotes() {
             const json = await loadValue("notes");
@@ -312,6 +322,7 @@ Vue.component('whiteboard-component', {
             });
         },
         deleteSelectedNotes() {
+            this.toDelete = this.notes.filter(note => note.selected);
             this.notes = this.notes.filter(note => !note.selected);
         },
         handleMouseDown(event) {
@@ -416,12 +427,7 @@ Vue.component('whiteboard-component', {
                     // // console.log("keys:", keys);
                     break;
                 case "delete":
-                    console.log("delete");
-                    console.log(this.notes.length);
-                    console.log(newNote.id);
-                    console.log(found.length);
                     this.notes = this.notes.filter(note => note.id !== doc._id);
-                    console.log(this.notes.length);
                     break;
             }
         },
@@ -449,7 +455,7 @@ Vue.component('whiteboard-component', {
         });
         this.restoreZoomAndPan();
         // await this.loadNotes();
-        // await this.db.connect();
+        // await this.db.connect(); // connecting through proxy so not needed
         await this.db.subscribe();
         await this.db.loadDocs();
     },

@@ -113,6 +113,31 @@ export class CouchClient {
         return data;
     }
 
+    async delete(doc: any) {
+        // TODO: should this be working with _id? Maybe everything needs to be _id.
+        if (typeof doc.id !== 'string') {
+            throw new Error(`doc.id is not string`);
+        }
+
+        if (typeof doc._rev !== 'string') {
+            throw new Error(`doc._rev is not string`);
+        }
+
+        const response = await fetch(`${this.url}/${this.dbname}/${doc.id}?rev=${doc._rev}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete document with id ${doc.id}`);
+        }
+
+        const data = await response.json();
+        return data;
+    }
+
     async loadDocs(): Promise<CouchDBAllDocsResponse> {
         const queryString = new URLSearchParams({
             include_docs: 'true',

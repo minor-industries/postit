@@ -32,6 +32,7 @@ interface SelectionBox {
 
 interface WhiteboardComponentData {
     notes: Note[];
+    toDelete: Note[];
     zoom: {
         level: number;
     };
@@ -87,6 +88,7 @@ Vue.component('whiteboard-component', {
     data(): WhiteboardComponentData {
         return {
             notes: [],
+            toDelete: [],
             zoom: {
                 level: 1,
             },
@@ -128,6 +130,17 @@ Vue.component('whiteboard-component', {
                 await this.putNote(note);
                 note.dirty = false;
             }
+
+            for (let i = 0; i < this.toDelete.length; i++) {
+                const note = this.toDelete[i];
+                console.log(note.text, note._rev);
+                if (note._rev === undefined) {
+                    continue; // this probably hasn't been stored to couch yet
+                }
+                await this.db!.delete(note);
+            }
+
+            this.toDelete = [];
         },
 
         async loadNotes(this: WhiteboardComponentInstance) {
@@ -419,6 +432,7 @@ Vue.component('whiteboard-component', {
         },
 
         deleteSelectedNotes(this: WhiteboardComponentInstance) {
+            this.toDelete = this.notes.filter(note => note.selected);
             this.notes = this.notes.filter(note => !note.selected);
         },
 
