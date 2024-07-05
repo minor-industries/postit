@@ -1,33 +1,17 @@
 export class CouchClient {
-    private dbname = "my_database" //TODO
-    private username = 'admin'; //TODO
-    private password = 'mypassword'; //TODO
     private url = '/couchdb';
 
     private readonly docs: { [key: string]: Document };
     private readonly callback: (kind: string, doc: Document) => void;
+    private readonly dbname: string;
 
-    constructor(callback: (kind: string, doc: Document) => void) {
+    constructor(
+        dbname: string,
+        callback: (kind: string, doc: Document) => void
+    ) {
+        this.dbname = dbname;
         this.docs = {};
         this.callback = callback
-    }
-
-    async connect() {
-        const response = await fetch(`${this.url}/_session`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `name=${this.username}&password=${this.password}`,
-            // credentials: 'include'
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to create session');
-        }
-
-        const data = await response.json();
-        // console.log('Session created', data);
     }
 
     subscribe() {

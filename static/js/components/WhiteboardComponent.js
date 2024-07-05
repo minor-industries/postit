@@ -5,6 +5,7 @@ import { textInput } from "./EditNote.js";
 import { loadValue } from "./Api.js";
 import { getTextColorForBackground } from "./Colors.js";
 import { CouchClient } from "./CouchClient.js";
+const dbname = "whiteboard-main";
 Vue.component('whiteboard-component', {
     data() {
         return {
@@ -433,7 +434,7 @@ Vue.component('whiteboard-component', {
         },
     },
     async mounted() {
-        this.db = new CouchClient((kind, doc) => {
+        this.db = new CouchClient(dbname, (kind, doc) => {
             this.couchCallback(kind, doc);
         });
         this.$refs.whiteboard.focus();

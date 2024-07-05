@@ -12,6 +12,8 @@ declare const vex: any; //TODO
 declare const uuid: any; //TODO
 declare const interact: any // TODO
 
+const dbname = "whiteboard-main"
+
 declare global {
     interface Window {
         PouchDB: any;
@@ -556,7 +558,7 @@ Vue.component('whiteboard-component', {
     },
 
     async mounted(this: WhiteboardComponentInstance) {
-        this.db = new CouchClient((kind: string, doc: Document) => {
+        this.db = new CouchClient(dbname, (kind: string, doc: Document) => {
             this.couchCallback(kind, doc);
         });
 
