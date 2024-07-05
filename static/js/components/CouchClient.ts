@@ -2,7 +2,7 @@ export class CouchClient {
     private dbname = "my_database" //TODO
     private username = 'admin'; //TODO
     private password = 'mypassword'; //TODO
-    private url = 'http://localhost:5984';
+    private url = '/couchdb';
 
     private readonly docs: { [key: string]: Document };
     private readonly callback: (kind: string, doc: Document) => void;
