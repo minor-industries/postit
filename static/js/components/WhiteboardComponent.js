@@ -441,7 +441,7 @@ Vue.component('whiteboard-component', {
         });
         this.restoreZoomAndPan();
         // await this.loadNotes();
-        await this.db.connect();
+        // await this.db.connect();
         await this.db.subscribe();
         await this.db.loadDocs();
     },

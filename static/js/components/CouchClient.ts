@@ -19,7 +19,7 @@ export class CouchClient {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: `name=${this.username}&password=${this.password}`,
-            credentials: 'include'
+            // credentials: 'include'
         });
 
         if (!response.ok) {
@@ -40,7 +40,10 @@ export class CouchClient {
         }).toString()
 
         const changesUrl = `${this.url}/${this.dbname}/_changes?${queryString}`;
-        const eventSource = new EventSource(changesUrl, {withCredentials: true});
+        const eventSource = new EventSource(
+            changesUrl,
+            // {withCredentials: true}
+        );
 
         return new Promise((resolve) => {
             eventSource.onopen = (event: Event) => {
@@ -98,7 +101,7 @@ export class CouchClient {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(doc),
-            credentials: 'include',
+            // credentials: 'include',
         });
 
         if (!response.ok) {
@@ -117,7 +120,7 @@ export class CouchClient {
 
         const response = await fetch(`${this.url}/${this.dbname}/_all_docs?${queryString}`, {
             method: 'GET',
-            credentials: 'include',
+            // credentials: 'include',
         });
 
         if (!response.ok) {
