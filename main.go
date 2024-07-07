@@ -24,7 +24,7 @@ var args struct {
 }
 
 //go:embed static/css/*.css
-//go:embed static/postit.html
+//go:embed static/*.html
 //go:embed static/js/*.js
 //go:embed static/js/components/*.js
 
@@ -56,16 +56,18 @@ func run() error {
 		c.Redirect(http.StatusTemporaryRedirect, "postit.html")
 	})
 
+	staticFS, err := fs.Sub(FS, "static")
+	if err != nil {
+		panic(err)
+	}
+	static := http.FS(staticFS)
+
 	if args.StaticPath != "" {
 		r.Static("/static", args.StaticPath)
 		r.StaticFile("postit.html", args.StaticPath+"/postit.html")
 		r.StaticFile("boards.html", args.StaticPath+"/boards.html")
 	} else {
-		sub, err := fs.Sub(FS, "static")
-		if err != nil {
-			panic(err)
-		}
-		static := http.FS(sub)
+
 		r.GET("/postit.html", func(c *gin.Context) {
 			c.FileFromFS("postit.html", static)
 		})
@@ -102,6 +104,10 @@ func serveRevereProxy(target string, rootPath string, res http.ResponseWriter, r
 	req.Header.Set("Authorization", "Basic "+encodedAuth)
 
 	proxy := httputil.NewSingleHostReverseProxy(dst)
+	proxy.ModifyResponse = func(response *http.Response) error {
+		//fmt.Println(response.Request.URL.String(), response.Status)
+		return nil
+	}
 	proxy.ServeHTTP(res, req)
 }
 
