@@ -149,11 +149,35 @@ export class CouchClient {
 
         return data;
     }
+
+    async queryView(viewName: string, params: QueryParams = {}): Promise<any> {
+        const queryString = new URLSearchParams(params as Record<string, string>).toString();
+        const viewUrl = `${this.url}/${this.dbname}/_design/boardCounts/_view/${viewName}?${queryString}`;
+
+        const response = await fetch(viewUrl, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to query view ${viewName}`);
+        }
+
+        const data = await response.json();
+        return data;
+    }
 }
 
 function getDocRevision(doc: Document): number {
     const partBeforeHyphen = doc._rev.split('-')[0];
     return Number(partBeforeHyphen);
+}
+
+interface QueryParams {
+    group?: boolean;
+    reduce?: boolean;
 }
 
 interface CouchDBAllDocsResponse {

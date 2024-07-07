@@ -59,6 +59,7 @@ func run() error {
 	if args.StaticPath != "" {
 		r.Static("/static", args.StaticPath)
 		r.StaticFile("postit.html", args.StaticPath+"/postit.html")
+		r.StaticFile("boards.html", args.StaticPath+"/boards.html")
 	} else {
 		sub, err := fs.Sub(FS, "static")
 		if err != nil {
@@ -67,6 +68,9 @@ func run() error {
 		static := http.FS(sub)
 		r.GET("/postit.html", func(c *gin.Context) {
 			c.FileFromFS("postit.html", static)
+		})
+		r.GET("/boards.html", func(c *gin.Context) {
+			c.FileFromFS("boards.html", static)
 		})
 		r.StaticFS("/static", static)
 	}

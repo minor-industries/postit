@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board Counts</title>
+    <style>
+        table {
+            width: 50%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.0/dist/pouchdb.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <h1>Boards</h1>
+    <table id="boardCountsTable">
+        <thead>
+        <tr>
+            <th>Board</th>
+            <th>Count</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Board counts will be inserted here -->
+        </tbody>
+    </table>
+</div>
+<script>
+    class CouchClient {
+        constructor(dbname) {
+            this.url = '/couchdb';
+            this.dbname = dbname;
+        }
+
+        async queryView(viewName, params = {}) {
+            const queryString = new URLSearchParams(params).toString();
+            const viewUrl = `${this.url}/${this.dbname}/_design/boardCounts/_view/${viewName}?${queryString}`;
+
+            const response = await fetch(viewUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to query view ${viewName}`);
+            }
+
+            const data = await response.json();
+            return data;
+        }
+    }
+
+    async function loadBoardCounts() {
+        const client = new CouchClient('whiteboard-main');
+        try {
+            const data = await client.queryView('by_board', { group: true });
+            const tbody = document.getElementById('boardCountsTable').querySelector('tbody');
+            data.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                const tdBoard = document.createElement('td');
+                const tdCount = document.createElement('td');
+                const link = document.createElement('a');
+                link.href = `postit.html?board=${encodeURIComponent(row.key)}`;
+                link.textContent = row.key;
+                tdBoard.appendChild(link);
+                tdCount.textContent = row.value;
+                tr.appendChild(tdBoard);
+                tr.appendChild(tdCount);
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error('Error fetching board counts:', error);
+        }
+    }
+
+    window.onload = loadBoardCounts;
+</script>
+</body>
+</html>
