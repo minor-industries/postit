@@ -544,6 +544,7 @@ Vue.component('whiteboard-component', {
         couchCallback(this: WhiteboardComponentInstance, kind: string, doc: Document) {
             const currentBoard = doc.board || "main"; // TODO: remove main fallback?
             if (currentBoard != this.currentBoard) {
+                // TODO: might want to remove from this.notes
                 console.log("skipping due to mismatched board");
                 return;
             }
