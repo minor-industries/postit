@@ -434,8 +434,13 @@ Vue.component('whiteboard-component', {
         },
 
         deleteSelectedNotes(this: WhiteboardComponentInstance) {
-            this.toDelete = this.notes.filter(note => note.selected);
+            let toDelete = this.notes.filter(note => note.selected);
             this.notes = this.notes.filter(note => !note.selected);
+
+            this.toDelete.push(...toDelete);
+            toDelete.forEach(note => {
+                note.selected = false;
+            });
         },
 
         handleMouseDown(this: WhiteboardComponentInstance, event: MouseEvent) {
