@@ -6,6 +6,11 @@ import { loadValue } from "./Api.js";
 import { getTextColorForBackground } from "./Colors.js";
 import { CouchClient } from "./CouchClient.js";
 const dbname = "whiteboard-main";
+function getCurrentBoard() {
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+    return params.get('board') || "main";
+}
 Vue.component('whiteboard-component', {
     data() {
         return {
@@ -22,6 +27,7 @@ Vue.component('whiteboard-component', {
             isDialogOpen: false,
             textMeasure: new TextMeasurer(),
             db: null,
+            currentBoard: getCurrentBoard(),
         };
     },
     computed: {
@@ -411,6 +417,11 @@ Vue.component('whiteboard-component', {
             });
         },
         couchCallback(kind, doc) {
+            const currentBoard = doc.board || "main"; // TODO: remove main fallback?
+            if (currentBoard != this.currentBoard) {
+                console.log("skipping due to mismatched board");
+                return;
+            }
             // console.log("callback", kind, JSON.stringify(doc));
             // SHOULD I SIMPLY USE THE RAW COUCH OBJECT?
             // TODO: This seems like it will be brittle (yes, this is bad)

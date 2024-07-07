@@ -46,7 +46,16 @@ interface WhiteboardComponentData {
     isDialogOpen: boolean;
     textMeasure: TextMeasurer;
     db: CouchClient | null;
+    currentBoard: string;
 }
+
+
+function getCurrentBoard() {
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+    return params.get('board') || "main";
+}
+
 
 type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     saveNotes(): Promise<void>;
@@ -102,6 +111,7 @@ Vue.component('whiteboard-component', {
             isDialogOpen: false,
             textMeasure: new TextMeasurer(),
             db: null,
+            currentBoard: getCurrentBoard(),
         };
     },
     computed: {
@@ -532,8 +542,13 @@ Vue.component('whiteboard-component', {
         },
 
         couchCallback(this: WhiteboardComponentInstance, kind: string, doc: Document) {
-            // console.log("callback", kind, JSON.stringify(doc));
+            const currentBoard = doc.board || "main"; // TODO: remove main fallback?
+            if (currentBoard != this.currentBoard) {
+                console.log("skipping due to mismatched board");
+                return;
+            }
 
+            // console.log("callback", kind, JSON.stringify(doc));
             // SHOULD I SIMPLY USE THE RAW COUCH OBJECT?
 
             // TODO: This seems like it will be brittle (yes, this is bad)
