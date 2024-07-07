@@ -53,6 +53,10 @@ export class CouchClient {
     }
 
     private updateDoc(doc: Document) {
+        if (doc._id.startsWith("_design/")) {
+            return;
+        }
+
         const existing = this.docs[doc._id];
         if (existing === undefined) {
             this.docs[doc._id] = doc;
