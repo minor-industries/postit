@@ -27,6 +27,7 @@ export interface Note {
     selected?: boolean;
     isNoteDragging?: boolean;
     dirty?: boolean;
+    board?: string; // TODO: remove optionality
 }
 
 interface NoteComponentProps {

@@ -201,6 +201,9 @@ Vue.component('whiteboard-component', {
 
         async runAction(this: WhiteboardComponentInstance) {
             const action = await textInput('action:', '');
+            if (!action) {
+                return;
+            }
             // console.log("action:", action);
             const selected = this.notes.filter(note => note.selected);
 
@@ -222,6 +225,22 @@ Vue.component('whiteboard-component', {
                         console.log(JSON.stringify(note, null, 2));
                     })
                     return;
+                case "change-board":
+                    const value = await textInput('new board name:', '');
+                    if (!value) {
+                        return;
+                    }
+                    selected.forEach(note => {
+                        note.board = value;
+                    })
+                    return;
+                case "dirty":
+                    selected.forEach(note => {
+                        note.dirty = true;
+                    })
+                    return;
+                default:
+                    console.log(`unknown command: ${action}`)
             }
         },
 
@@ -301,7 +320,7 @@ Vue.component('whiteboard-component', {
                 ...toSave
             } = note;
 
-            // console.log("putting", toSave.id, toSave.hasOwnProperty("_id"));
+            console.log("putting", toSave.id, JSON.stringify(toSave));
             await this.db!.put({
                 ...toSave,
                 _id: toSave.id,
@@ -505,6 +524,7 @@ Vue.component('whiteboard-component', {
                 note.text,
                 note.color,
                 note.textColor,
+                note.board,
             ], () => {
                 // console.log(baseNote.text, "dirtied");
                 note.dirty = true;
@@ -516,7 +536,7 @@ Vue.component('whiteboard-component', {
 
             // SHOULD I SIMPLY USE THE RAW COUCH OBJECT?
 
-            // This seems like it will be brittle
+            // TODO: This seems like it will be brittle (yes, this is bad)
             const newNote: Note = {
                 id: doc.id,
                 _rev: doc._rev,
@@ -527,6 +547,7 @@ Vue.component('whiteboard-component', {
                 height: doc.height,
                 color: doc.color,
                 textColor: doc.textColor,
+                board: doc.board,
             };
 
             const found = this.notes.filter(note => note.id === newNote.id);
