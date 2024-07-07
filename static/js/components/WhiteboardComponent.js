@@ -473,7 +473,7 @@ Vue.component('whiteboard-component', {
                     break;
             }
         },
-        fitNotesToScreen(maxZoom = 2, padding = 20) {
+        fitNotesToScreen(maxZoom = 0.7, padding = 20) {
             if (this.notes.length === 0) {
                 return;
             }

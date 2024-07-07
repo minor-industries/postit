@@ -602,7 +602,7 @@ Vue.component('whiteboard-component', {
             }
         },
 
-        fitNotesToScreen(this: WhiteboardComponentInstance, maxZoom: number = 2, padding: number = 20) {
+        fitNotesToScreen(this: WhiteboardComponentInstance, maxZoom: number = 0.7, padding: number = 20) {
             if (this.notes.length === 0) {
                 return;
             }
