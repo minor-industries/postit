@@ -398,6 +398,7 @@ Vue.component('whiteboard-component', {
                 selected: false,
                 isNoteDragging: false,
                 dirty: dirty,
+                board: this.currentBoard,
                 ...baseNote,
             };
             this.notes.push(note);
@@ -419,6 +420,7 @@ Vue.component('whiteboard-component', {
         couchCallback(kind, doc) {
             const currentBoard = doc.board || "main"; // TODO: remove main fallback?
             if (currentBoard != this.currentBoard) {
+                // TODO: might want to remove from this.notes
                 console.log("skipping due to mismatched board");
                 return;
             }
