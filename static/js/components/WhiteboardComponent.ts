@@ -7,6 +7,7 @@ import {loadValue} from "./Api.js";
 import {getTextColorForBackground} from "./Colors.js";
 import {CouchClient, Document} from "./CouchClient.js";
 import {Note} from "./NoteComponent.js";
+import {calculateZoom} from "./autozoom.js";
 
 declare const vex: any; //TODO
 declare const uuid: any; //TODO
@@ -85,6 +86,7 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     couchCallback(kind: string, doc: Document): void;
     putNote(note: Note): Promise<void>;
     pushNewNote(note: Note, dirty: boolean): void;
+    fitNotesToScreen(maxZoom?: number, padding?: number): void;
     $refs: {
         whiteboard: HTMLDivElement;
         svgContainer: SVGSVGElement;
@@ -206,6 +208,8 @@ Vue.component('whiteboard-component', {
                 this.runAction();
             } else if (event.key === 'h') {
                 this.horizontalAlign();
+            } else if (event.key === 'z') {
+                this.fitNotesToScreen();
             }
         },
 
@@ -597,6 +601,23 @@ Vue.component('whiteboard-component', {
                     break;
             }
         },
+
+        fitNotesToScreen(this: WhiteboardComponentInstance, maxZoom: number = 2, padding: number = 20) {
+            if (this.notes.length === 0) {
+                return;
+            }
+
+            const {zoom, panX, panY} = calculateZoom(this.notes, maxZoom, padding);
+
+            this.zoom.level = zoom;
+            this.pan.translateX = panX;
+            this.pan.translateY = panY;
+
+            // Store the new zoom and pan settings
+            sessionStorage.setItem('zoomLevel', zoom.toString());
+            sessionStorage.setItem('panTranslateX', panX.toString());
+            sessionStorage.setItem('panTranslateY', panY.toString());
+        }
     },
 
     async mounted(this: WhiteboardComponentInstance) {

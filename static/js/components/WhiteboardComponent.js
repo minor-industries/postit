@@ -5,6 +5,7 @@ import { textInput } from "./EditNote.js";
 import { loadValue } from "./Api.js";
 import { getTextColorForBackground } from "./Colors.js";
 import { CouchClient } from "./CouchClient.js";
+import { calculateZoom } from "./autozoom.js";
 const dbname = "whiteboard-main";
 function getCurrentBoard() {
     const url = new URL(window.location.href);
@@ -126,6 +127,9 @@ Vue.component('whiteboard-component', {
             }
             else if (event.key === 'h') {
                 this.horizontalAlign();
+            }
+            else if (event.key === 'z') {
+                this.fitNotesToScreen();
             }
         },
         async runAction() {
@@ -469,6 +473,19 @@ Vue.component('whiteboard-component', {
                     break;
             }
         },
+        fitNotesToScreen(maxZoom = 2, padding = 20) {
+            if (this.notes.length === 0) {
+                return;
+            }
+            const { zoom, panX, panY } = calculateZoom(this.notes, maxZoom, padding);
+            this.zoom.level = zoom;
+            this.pan.translateX = panX;
+            this.pan.translateY = panY;
+            // Store the new zoom and pan settings
+            sessionStorage.setItem('zoomLevel', zoom.toString());
+            sessionStorage.setItem('panTranslateX', panX.toString());
+            sessionStorage.setItem('panTranslateY', panY.toString());
+        }
     },
     async mounted() {
         this.db = new CouchClient(dbname, (kind, doc) => {
