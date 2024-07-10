@@ -1,4 +1,4 @@
-/// <reference path="./vue-types.d.ts" />
+import Vue from 'vue';
 import { nearbyColor, TextMeasurer } from "./Util.js";
 import { changeNoteColor } from "./ColorChanger.js";
 import { textInput } from "./EditNote.js";

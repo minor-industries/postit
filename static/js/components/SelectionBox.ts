@@ -1,4 +1,4 @@
-/// <reference path="./vue-types.d.ts" />
+import Vue from 'vue';
 
 interface SvgPoint {
     x: number;

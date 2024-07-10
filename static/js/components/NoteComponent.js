@@ -1,4 +1,4 @@
-/// <reference path="./vue-types.d.ts" />
+import Vue from "vue";
 Vue.component('note-component', {
     props: ['note'],
     computed: {
@@ -62,4 +62,3 @@ Vue.component('note-component', {
         });
     },
 });
-export {};

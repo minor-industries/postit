@@ -1,5 +1,4 @@
-"use strict";
-/// <reference path="./vue-types.d.ts" />
+import Vue from 'vue';
 Vue.component('selection-box', {
     data() {
         return {

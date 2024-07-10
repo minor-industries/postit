@@ -1,4 +1,4 @@
-/// <reference path="./vue-types.d.ts" />
+import Vue from "vue";
 
 declare const interact: any;
 
