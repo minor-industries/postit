@@ -83,13 +83,14 @@ Vue.component('whiteboard-component', {
         handleZoom(zoomFactor) {
             const c = this.getScreenCenter();
             let oldZoom = this.zoom.level;
-            const newZoom = oldZoom * (1 + zoomFactor);
+            let newZoom = oldZoom * (1 + zoomFactor);
+            newZoom = Math.max(newZoom, 0.25);
+            newZoom = Math.min(newZoom, 2);
             const x = this.pan.translateX;
             const y = this.pan.translateY;
             // this is based on the idea of keeping the point corresponding to the "content center" the same
             const newX = c.x + (newZoom / oldZoom) * (x - c.x);
             const newY = c.y + (newZoom / oldZoom) * (y - c.y);
-            console.log(this.zoom.level);
             // these should also be stored automatically in sessions storage due to watchers
             this.zoom.level = newZoom;
             this.pan.translateX = newX;

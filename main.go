@@ -4,8 +4,8 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
+	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
-	"github.com/jessevdk/go-flags"
 	"github.com/pkg/errors"
 	"io/fs"
 	"net/http"
@@ -17,39 +17,47 @@ import (
 	"strings"
 )
 
-var args struct {
-	Addr string `long:"addr" env:"ADDR" default:":8000" description:"server address"`
+type Config struct {
+	Server struct {
+		Addr       string `toml:"addr"`
+		StaticPath string `toml:"static_path"`
+	} `toml:"server"`
 
-	StaticPath string `long:"static-path"`
+	CouchDB struct {
+		Username string `toml:"username"`
+		Password string `toml:"password"`
+		Host     string `toml:"host"`
+	} `toml:"couchdb"`
 }
+
+var config Config
 
 //go:embed static/css/*.css
 //go:embed static/*.html
 //go:embed static/js/*.js
 //go:embed static/js/components/*.js
-
 var FS embed.FS
 
 func run() error {
-	_, err := flags.Parse(&args)
-	if err != nil {
-		return errors.Wrap(err, "parse args")
+	configPath := os.ExpandEnv("$HOME/postit-config.toml")
+	if _, err := toml.DecodeFile(configPath, &config); err != nil {
+		return errors.Wrap(err, "decode toml config")
 	}
 
 	r := gin.Default()
 
+	// Initialize the database
 	dbPath := os.ExpandEnv("$HOME/postit.db")
-
 	db, err := database.InitDB(dbPath)
 	if err != nil {
-		panic("failed to connect database")
+		return errors.Wrap(err, "failed to connect database")
 	}
 
 	s := &server{db: db}
 
+	// Setup routes
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		c.Status(204)
-
 	})
 
 	r.GET("/", func(c *gin.Context) {
@@ -58,16 +66,15 @@ func run() error {
 
 	staticFS, err := fs.Sub(FS, "static")
 	if err != nil {
-		panic(err)
+		return errors.Wrap(err, "get static file system")
 	}
 	static := http.FS(staticFS)
 
-	if args.StaticPath != "" {
-		r.Static("/static", args.StaticPath)
-		r.StaticFile("postit.html", args.StaticPath+"/postit.html")
-		r.StaticFile("boards.html", args.StaticPath+"/boards.html")
+	if config.Server.StaticPath != "" {
+		r.Static("/static", config.Server.StaticPath)
+		r.StaticFile("postit.html", config.Server.StaticPath+"/postit.html")
+		r.StaticFile("boards.html", config.Server.StaticPath+"/boards.html")
 	} else {
-
 		r.GET("/postit.html", func(c *gin.Context) {
 			c.FileFromFS("postit.html", static)
 		})
@@ -78,9 +85,9 @@ func run() error {
 	}
 
 	r.POST("/twirp/kv.KVService/*Method", gin.WrapH(kv.NewKVServiceServer(s, nil)))
-	proxy(r, "/couchdb", "http://127.0.0.1:5984")
+	proxy(r, "/couchdb", config)
 
-	return r.Run(args.Addr)
+	return r.Run(config.Server.Addr)
 }
 
 func main() {
@@ -90,29 +97,23 @@ func main() {
 	}
 }
 
-func serveRevereProxy(target string, rootPath string, res http.ResponseWriter, req *http.Request) {
-	dst, _ := url.Parse(target)
+func serveReverseProxy(config Config, rootPath string, res http.ResponseWriter, req *http.Request) {
+	dst, _ := url.Parse(config.CouchDB.Host)
 	req.URL.Path = strings.TrimPrefix(req.URL.Path, rootPath)
 
-	const (
-		username = "admin"      //TODO
-		password = "mypassword" //TODO
-	)
-
-	auth := username + ":" + password
+	auth := config.CouchDB.Username + ":" + config.CouchDB.Password
 	encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
 	req.Header.Set("Authorization", "Basic "+encodedAuth)
 
 	proxy := httputil.NewSingleHostReverseProxy(dst)
 	proxy.ModifyResponse = func(response *http.Response) error {
-		//fmt.Println(response.Request.URL.String(), response.Status)
 		return nil
 	}
 	proxy.ServeHTTP(res, req)
 }
 
-func proxy(c *gin.Engine, path string, host string) {
+func proxy(c *gin.Engine, path string, config Config) {
 	c.Any("/"+path+"/*any", func(c *gin.Context) {
-		serveRevereProxy(host, path, c.Writer, c.Request)
+		serveReverseProxy(config, path, c.Writer, c.Request)
 	})
 }
