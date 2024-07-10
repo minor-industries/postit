@@ -12,7 +12,8 @@ function getCurrentBoard() {
     const params = new URLSearchParams(url.search);
     return params.get('board') || "main";
 }
-Vue.component('whiteboard-component', {
+export default Vue.extend({
+    name: 'WhiteboardComponent',
     data() {
         return {
             notes: [],
@@ -38,7 +39,6 @@ Vue.component('whiteboard-component', {
     },
     watch: {
         'zoom.level'(newZoomLevel) {
-            // console.log("zoomlevel");
             sessionStorage.setItem('zoomLevel', newZoomLevel.toString());
         },
         'pan.translateX'(newTranslateX) {
@@ -50,20 +50,16 @@ Vue.component('whiteboard-component', {
     },
     methods: {
         async saveNotes() {
-            // console.log("save notes");
-            // await saveValue("notes", JSON.stringify(this.notes));
             const dirty = this.notes.filter(note => note.dirty);
             for (let i = 0; i < dirty.length; i++) {
                 const note = dirty[i];
-                // console.log('saving', note.id);
                 await this.putNote(note);
                 note.dirty = false;
             }
             for (let i = 0; i < this.toDelete.length; i++) {
                 const note = this.toDelete[i];
-                console.log(note.text, note._rev);
                 if (note._rev === undefined) {
-                    continue; // this probably hasn't been stored to couch yet
+                    continue;
                 }
                 await this.db.delete(note);
             }
@@ -88,10 +84,8 @@ Vue.component('whiteboard-component', {
             newZoom = Math.min(newZoom, 2);
             const x = this.pan.translateX;
             const y = this.pan.translateY;
-            // this is based on the idea of keeping the point corresponding to the "content center" the same
             const newX = c.x + (newZoom / oldZoom) * (x - c.x);
             const newY = c.y + (newZoom / oldZoom) * (y - c.y);
-            // these should also be stored automatically in sessions storage due to watchers
             this.zoom.level = newZoom;
             this.pan.translateX = newX;
             this.pan.translateY = newY;
@@ -157,7 +151,6 @@ Vue.component('whiteboard-component', {
             if (!action) {
                 return;
             }
-            // console.log("action:", action);
             const selected = this.notes.filter(note => note.selected);
             switch (action) {
                 case "fix-width":
@@ -225,7 +218,6 @@ Vue.component('whiteboard-component', {
             }
             const note = selectedNotes[0];
             const newText = await textInput('Edit Note Text', note.text);
-            // console.log(newText);
             if (newText === null) {
                 return;
             }
@@ -238,10 +230,8 @@ Vue.component('whiteboard-component', {
                 return;
             }
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
-            // Adjust the coordinates based on pan and zoom
             const adjustedX = (svgPoint.x - this.pan.translateX) / this.zoom.level;
             const adjustedY = (svgPoint.y - this.pan.translateY) / this.zoom.level;
-            // Determine the initial color based on nearby notes
             const initialColor = nearbyColor(adjustedX, adjustedY, this.notes, 'yellow');
             const textColor = getTextColorForBackground(initialColor);
             const newNote = {
@@ -258,7 +248,6 @@ Vue.component('whiteboard-component', {
         },
         async putNote(note) {
             const { selected, isNoteDragging, dirty, ...toSave } = note;
-            console.log("putting", toSave.id, JSON.stringify(toSave));
             await this.db.put({
                 ...toSave,
                 _id: toSave.id,
@@ -266,7 +255,7 @@ Vue.component('whiteboard-component', {
         },
         async addMulti(event) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
-            const newText = await textInput('Add Multiple', '', true); // Use textarea
+            const newText = await textInput('Add Multiple', '', true);
             if (newText === null) {
                 return;
             }
@@ -351,9 +340,6 @@ Vue.component('whiteboard-component', {
                     note.x <= selectionBox.x + selectionBox.width &&
                     note.y + note.height >= selectionBox.y &&
                     note.y <= selectionBox.y + selectionBox.height);
-                if (selected) {
-                    // console.log("selected2", note.text);
-                }
                 note.selected = selected;
             });
         },
@@ -363,7 +349,6 @@ Vue.component('whiteboard-component', {
             });
         },
         handleNoteDragEnd() {
-            // console.log("drag end");
             this.isDragging = false;
         },
         unselectAllNotes() {
@@ -426,7 +411,6 @@ Vue.component('whiteboard-component', {
                 ...baseNote,
             };
             this.notes.push(note);
-            // console.log("watch");
             this.$watch(() => [
                 note.x,
                 note.y,
@@ -437,19 +421,14 @@ Vue.component('whiteboard-component', {
                 note.textColor,
                 note.board,
             ], () => {
-                // console.log(baseNote.text, "dirtied");
                 note.dirty = true;
             });
         },
         couchCallback(kind, doc) {
-            const currentBoard = doc.board || "main"; // TODO: remove main fallback?
+            const currentBoard = doc.board || "main";
             if (currentBoard != this.currentBoard) {
-                // TODO: might want to remove from this.notes
                 return;
             }
-            // console.log("callback", kind, JSON.stringify(doc));
-            // SHOULD I SIMPLY USE THE RAW COUCH OBJECT?
-            // TODO: This seems like it will be brittle (yes, this is bad)
             const newNote = {
                 id: doc.id,
                 _rev: doc._rev,
@@ -473,20 +452,17 @@ Vue.component('whiteboard-component', {
                         this.pushNewNote(newNote, false);
                         break;
                     }
-                    // TODO: perhaps after getting an update from the server we might unset the dirty flag?
                     const existing = found[0];
                     Object.keys(newNote).forEach(key => {
                         if (existing.hasOwnProperty(key)) {
                             if (existing[key] !== newNote[key]) {
-                                existing[key] = newNote[key]; // Update existing properties only if the value has changed
+                                existing[key] = newNote[key];
                             }
                         }
                         else {
-                            this.$set(existing, key, newNote[key]); // Add new properties reactively
+                            this.$set(existing, key, newNote[key]);
                         }
                     });
-                    const keys = Object.keys(existing).filter(k => existing.hasOwnProperty(k)).join(", ");
-                    // // console.log("keys:", keys);
                     break;
                 case "delete":
                     this.notes = this.notes.filter(note => note.id !== doc._id);
@@ -501,7 +477,6 @@ Vue.component('whiteboard-component', {
             this.zoom.level = zoom;
             this.pan.translateX = panX;
             this.pan.translateY = panY;
-            // Store the new zoom and pan settings
             sessionStorage.setItem('zoomLevel', zoom.toString());
             sessionStorage.setItem('panTranslateX', panX.toString());
             sessionStorage.setItem('panTranslateY', panY.toString());
@@ -517,7 +492,7 @@ Vue.component('whiteboard-component', {
             listeners: {
                 move: (event) => {
                     if (event.shiftKey) {
-                        return; // Skip panning if shift key is pressed
+                        return;
                     }
                     this.isDragging = true;
                     this.pan.translateX += event.dx;
@@ -529,8 +504,6 @@ Vue.component('whiteboard-component', {
             }
         });
         this.restoreZoomAndPan();
-        // await this.loadNotes();
-        // await this.db.connect(); // connecting through proxy so not needed
         await this.db.subscribe();
         await this.db.loadDocs();
     },

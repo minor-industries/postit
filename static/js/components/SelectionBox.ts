@@ -31,7 +31,7 @@ interface SelectionBoxData {
     isActive: boolean;
 }
 
-type SelectionBoxInstance = SelectionBoxData & {
+export type SelectionBoxInstance = SelectionBoxData & {
     $parent: ParentComponent;
     $emit(event: string, ...args: any[]): void;
     box: Box;
