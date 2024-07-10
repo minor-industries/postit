@@ -8,7 +8,6 @@ import {getTextColorForBackground} from "./Colors.js";
 import {CouchClient, Document} from "./CouchClient.js";
 import {Note} from "./NoteComponent.js";
 import {calculateZoom} from "./autozoom.js";
-import {SelectionBoxInstance} from "./SelectionBox.js";
 
 declare const vex: any; //TODO
 declare const uuid: any; //TODO
@@ -49,12 +48,6 @@ interface WhiteboardComponentData {
     textMeasure: TextMeasurer;
     db: CouchClient | null;
     currentBoard: string;
-}
-
-interface WhiteboardComponentRefs {
-    whiteboard: HTMLDivElement;
-    svgContainer: SVGSVGElement;
-    selectionBox: SelectionBoxInstance; // Ensure SelectionBoxInstance is imported or defined
 }
 
 function getCurrentBoard() {
@@ -620,30 +613,30 @@ export default Vue.extend({
     },
 
     template: `
-        <div ref="whiteboard" class="whiteboard" 
-             :style="{ cursor: isDragging ? 'grabbing' : 'default' }" 
-             tabindex="0" 
-             @dblclick="handleDoubleClick"
-             @mousedown="handleMouseDown">
-            <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg"
-                @mousemove="handleMouseMove" @mouseup="handleMouseUp">
-                <g :transform="groupTransform">
-                
-                    <!-- Origin crosshair (+ sign) -->
-                    <line x1="-10" y1="0" x2="10" y2="0" stroke="grey" stroke-width="2"/>
-                    <line x1="0" y1="-10" x2="0" y2="10" stroke="grey" stroke-width="2"/>
-      
-                    <note-component v-for="note in notes" 
-                                    :key="note.id" 
-                                    :note="note"
-                                    :ref="'note-' + note.id" 
-                                    @select-note="selectNoteHandler"
-                                    @drag-start="isDragging = true"
-                                    @drag-move="updateNotePosition(note, $event.dx, $event.dy)"
-                                    @drag-end="handleNoteDragEnd"></note-component>
-                    <selection-box ref="selectionBox" @select-notes="handleSelectNotes"></selection-box>
-                </g>
-            </svg>
-        </div>
+      <div ref="whiteboard" class="whiteboard"
+           :style="{ cursor: isDragging ? 'grabbing' : 'default' }"
+           tabindex="0"
+           @dblclick="handleDoubleClick"
+           @mousedown="handleMouseDown">
+        <svg ref="svgContainer" id="svgContainer" xmlns="http://www.w3.org/2000/svg"
+             @mousemove="handleMouseMove" @mouseup="handleMouseUp">
+          <g :transform="groupTransform">
+
+            <!-- Origin crosshair (+ sign) -->
+            <line x1="-10" y1="0" x2="10" y2="0" stroke="grey" stroke-width="2"/>
+            <line x1="0" y1="-10" x2="0" y2="10" stroke="grey" stroke-width="2"/>
+
+            <note-component v-for="note in notes"
+                            :key="note.id"
+                            :note="note"
+                            :ref="'note-' + note.id"
+                            @select-note="selectNoteHandler"
+                            @drag-start="isDragging = true"
+                            @drag-move="updateNotePosition(note, $event.dx, $event.dy)"
+                            @drag-end="handleNoteDragEnd"></note-component>
+            <selection-box ref="selectionBox" @select-notes="handleSelectNotes"></selection-box>
+          </g>
+        </svg>
+      </div>
     `
 });

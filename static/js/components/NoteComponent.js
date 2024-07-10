@@ -1,5 +1,5 @@
 import Vue from "vue";
-Vue.component('note-component', {
+const NoteComponent = Vue.extend({
     props: {
         note: {
             type: Object,
@@ -67,3 +67,5 @@ Vue.component('note-component', {
         });
     }
 });
+Vue.component('note-component', NoteComponent);
+export default NoteComponent;

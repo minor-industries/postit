@@ -38,7 +38,7 @@ interface InteractEvent {
 
 type NoteComponentInstance = Vue & { note: Note };
 
-Vue.component('note-component', {
+const NoteComponent = Vue.extend({
     props: {
         note: {
             type: Object as () => Note,
@@ -91,7 +91,7 @@ Vue.component('note-component', {
                     if (event.shiftKey) {
                         return;
                     }
-                    this.$emit('drag-move', {dx: event.dx, dy: event.dy});
+                    this.$emit('drag-move', { dx: event.dx, dy: event.dy });
                 },
                 end: (event: InteractEvent) => {
                     if (event.shiftKey) {
@@ -106,3 +106,7 @@ Vue.component('note-component', {
         });
     }
 });
+
+Vue.component('note-component', NoteComponent);
+
+export default NoteComponent;
