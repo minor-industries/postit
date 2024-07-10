@@ -87,6 +87,8 @@ type WhiteboardComponentInstance = Vue & WhiteboardComponentData & {
     putNote(note: Note): Promise<void>;
     pushNewNote(note: Note, dirty: boolean): void;
     fitNotesToScreen(maxZoom?: number, padding?: number): void;
+    getScreenCenter(): SvgPoint;
+    handleZoom(zoom: number): void;
     $refs: {
         whiteboard: HTMLDivElement;
         svgContainer: SVGSVGElement;
@@ -162,25 +164,51 @@ Vue.component('whiteboard-component', {
             this.notes = JSON.parse(json.value);
         },
 
+        getScreenCenter(this: WhiteboardComponentInstance): SvgPoint {
+            const svg = this.$refs.svgContainer as SVGSVGElement;
+            const rect = svg.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            return {x: centerX, y: centerY};
+        },
+
+        handleZoom(this: WhiteboardComponentInstance, zoomFactor: number) {
+            const c = this.getScreenCenter();
+            let oldZoom = this.zoom.level;
+            let newZoom = oldZoom * (1 + zoomFactor);
+            newZoom = Math.max(newZoom, 0.25);
+            newZoom = Math.min(newZoom, 2);
+
+            const x = this.pan.translateX;
+            const y = this.pan.translateY;
+
+            // this is based on the idea of keeping the point corresponding to the "content center" the same
+            const newX = c.x + (newZoom / oldZoom) * (x - c.x);
+            const newY = c.y + (newZoom / oldZoom) * (y - c.y);
+
+            // these should also be stored automatically in sessions storage due to watchers
+            this.zoom.level = newZoom;
+            this.pan.translateX = newX;
+            this.pan.translateY = newY;
+        },
+
         async handleKeydown(this: WhiteboardComponentInstance, event: KeyboardEvent) {
             const target = event.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
                 return;
             }
 
-            const zoomFactor = 0.1;
+            const zoomFactor = 0.05;
+
             if (event.key === '+' || event.key === '=') {
                 event.preventDefault();
-                this.zoom.level += zoomFactor;
+                this.handleZoom(zoomFactor);
             } else if (event.key === '-') {
                 event.preventDefault();
-                this.zoom.level = Math.max(0.1, this.zoom.level - zoomFactor);
+                this.handleZoom(-zoomFactor);
             } else if (event.key === 's') {
                 event.preventDefault();
                 await this.saveNotes();
-                // } else if (event.key === 'l') {
-                //     event.preventDefault();
-                //     await this.loadNotes();
             } else if (event.key === 'd') {
                 event.preventDefault();
                 this.deleteSelectedNotes();

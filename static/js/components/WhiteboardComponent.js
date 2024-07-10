@@ -73,26 +73,45 @@ Vue.component('whiteboard-component', {
             const json = await loadValue("notes");
             this.notes = JSON.parse(json.value);
         },
+        getScreenCenter() {
+            const svg = this.$refs.svgContainer;
+            const rect = svg.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            return { x: centerX, y: centerY };
+        },
+        handleZoom(zoomFactor) {
+            const c = this.getScreenCenter();
+            let oldZoom = this.zoom.level;
+            const newZoom = oldZoom * (1 + zoomFactor);
+            const x = this.pan.translateX;
+            const y = this.pan.translateY;
+            // this is based on the idea of keeping the point corresponding to the "content center" the same
+            const newX = c.x + (newZoom / oldZoom) * (x - c.x);
+            const newY = c.y + (newZoom / oldZoom) * (y - c.y);
+            console.log(this.zoom.level);
+            // these should also be stored automatically in sessions storage due to watchers
+            this.zoom.level = newZoom;
+            this.pan.translateX = newX;
+            this.pan.translateY = newY;
+        },
         async handleKeydown(event) {
             const target = event.target;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
                 return;
             }
-            const zoomFactor = 0.1;
+            const zoomFactor = 0.05;
             if (event.key === '+' || event.key === '=') {
                 event.preventDefault();
-                this.zoom.level += zoomFactor;
+                this.handleZoom(zoomFactor);
             }
             else if (event.key === '-') {
                 event.preventDefault();
-                this.zoom.level = Math.max(0.1, this.zoom.level - zoomFactor);
+                this.handleZoom(-zoomFactor);
             }
             else if (event.key === 's') {
                 event.preventDefault();
                 await this.saveNotes();
-                // } else if (event.key === 'l') {
-                //     event.preventDefault();
-                //     await this.loadNotes();
             }
             else if (event.key === 'd') {
                 event.preventDefault();
