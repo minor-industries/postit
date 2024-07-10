@@ -1,6 +1,11 @@
 import Vue from "vue";
 Vue.component('note-component', {
-    props: ['note'],
+    props: {
+        note: {
+            type: Object,
+            required: true
+        }
+    },
     computed: {
         noteStyle() {
             const regularColor = this.note.color || "yellow";
@@ -26,12 +31,12 @@ Vue.component('note-component', {
         },
     },
     template: `
-        <g :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click.stop="selectNote">
-            <rect class="note" :width="note.width" :height="note.height" :style="noteStyle"></rect>
-            <text ref="text" x="10" y="30" :style="textStyle">
-                {{ note.text }}
-            </text>
-        </g>
+      <g :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click.stop="selectNote">
+        <rect class="note" :width="note.width" :height="note.height" :style="noteStyle"></rect>
+        <text ref="text" x="10" y="30" :style="textStyle">
+          {{ note.text }}
+        </text>
+      </g>
     `,
     mounted() {
         interact(this.$el).draggable({
@@ -60,5 +65,5 @@ Vue.component('note-component', {
                 }
             }
         });
-    },
+    }
 });
