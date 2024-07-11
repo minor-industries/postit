@@ -103,12 +103,12 @@ export default Vue.extend({
                 event.preventDefault();
                 await this.oneDialog(this.handleEditNote);
             } else if (event.key === 'a') {
-                this.align();
+                this.noteService.align();
             } else if (event.key === 'b') {
                 event.preventDefault();
                 this.runAction();
             } else if (event.key === 'h') {
-                this.horizontalAlign();
+                this.noteService.horizontalAlign();
             } else if (event.key === 'z') {
                 this.fitNotesToScreen();
             }
@@ -221,39 +221,6 @@ export default Vue.extend({
             }
         },
 
-        align() {
-            const selected = this.noteService.notes.filter(note => note.selected);
-            if (selected.length == 0) {
-                return;
-            }
-
-            selected.sort(function (a, b): number {
-                return a.y - b.y;
-            })
-
-            const top = selected[0];
-            for (let i = 1; i < selected.length; i++) {
-                selected[i].x = top.x;
-                selected[i].y = top.y + i * 60;
-            }
-        },
-
-        horizontalAlign() {
-            const selected = this.noteService.notes.filter(note => note.selected);
-            if (selected.length == 0) {
-                return;
-            }
-
-            selected.sort(function (a, b): number {
-                return a.y - b.y;
-            })
-
-            const top = selected[0];
-            for (let i = 1; i < selected.length; i++) {
-                selected[i].x = top.x;
-            }
-        },
-
         screenToSvgPoint(clientX: number, clientY: number): { x: number, y: number } {
             const svg = this.$refs.svgContainer as SVGSVGElement;
             const point = svg.createSVGPoint();
@@ -345,54 +312,6 @@ export default Vue.extend({
             this.noteService.pushNewNote(baseNote, dirty, this);
         },
 
-        couchCallback(kind: string, doc: Document) {
-            const currentBoard = doc.board || "main";
-            if (currentBoard != this.noteService.currentBoard) {
-                return;
-            }
-
-            const newNote: Note = {
-                id: doc.id,
-                _rev: doc._rev,
-                text: doc.text,
-                x: doc.x,
-                y: doc.y,
-                width: doc.width,
-                height: doc.height,
-                color: doc.color,
-                textColor: doc.textColor,
-                board: doc.board,
-            };
-
-            const found = this.noteService.notes.filter(note => note.id === newNote.id);
-            if (found.length > 1) {
-                throw new Error("found more than one note with the same id");
-            }
-
-            switch (kind) {
-                case "new":
-                case "update":
-                    if (found.length == 0) {
-                        this.pushNewNote(newNote, false);
-                        break;
-                    }
-                    const existing = found[0];
-                    Object.keys(newNote).forEach(key => {
-                        if (existing.hasOwnProperty(key)) {
-                            if ((existing as any)[key] !== (newNote as any)[key]) {
-                                (existing as any)[key] = (newNote as any)[key];
-                            }
-                        } else {
-                            this.$set(existing, key, (newNote as any)[key]);
-                        }
-                    });
-                    break;
-                case "delete":
-                    this.noteService.notes = this.noteService.notes.filter(note => note.id !== doc._id);
-                    break;
-            }
-        },
-
         fitNotesToScreen(maxZoom: number = 0.7, padding: number = 20) {
             if (this.noteService.notes.length === 0) {
                 return;
@@ -407,7 +326,7 @@ export default Vue.extend({
 
     async mounted() {
         this.noteService.db = new CouchClient(dbname, (kind: string, doc: Document) => {
-            this.couchCallback(kind, doc);
+            this.noteService.couchCallback(kind, doc, this);
         });
 
         (this.$refs as any).whiteboard.focus();

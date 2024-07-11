@@ -79,14 +79,14 @@ export default Vue.extend({
                 await this.oneDialog(this.handleEditNote);
             }
             else if (event.key === 'a') {
-                this.align();
+                this.noteService.align();
             }
             else if (event.key === 'b') {
                 event.preventDefault();
                 this.runAction();
             }
             else if (event.key === 'h') {
-                this.horizontalAlign();
+                this.noteService.horizontalAlign();
             }
             else if (event.key === 'z') {
                 this.fitNotesToScreen();
@@ -190,33 +190,6 @@ export default Vue.extend({
                 await this.addNoteAt(event);
             }
         },
-        align() {
-            const selected = this.noteService.notes.filter(note => note.selected);
-            if (selected.length == 0) {
-                return;
-            }
-            selected.sort(function (a, b) {
-                return a.y - b.y;
-            });
-            const top = selected[0];
-            for (let i = 1; i < selected.length; i++) {
-                selected[i].x = top.x;
-                selected[i].y = top.y + i * 60;
-            }
-        },
-        horizontalAlign() {
-            const selected = this.noteService.notes.filter(note => note.selected);
-            if (selected.length == 0) {
-                return;
-            }
-            selected.sort(function (a, b) {
-                return a.y - b.y;
-            });
-            const top = selected[0];
-            for (let i = 1; i < selected.length; i++) {
-                selected[i].x = top.x;
-            }
-        },
         screenToSvgPoint(clientX, clientY) {
             const svg = this.$refs.svgContainer;
             const point = svg.createSVGPoint();
@@ -295,51 +268,6 @@ export default Vue.extend({
         pushNewNote(baseNote, dirty) {
             this.noteService.pushNewNote(baseNote, dirty, this);
         },
-        couchCallback(kind, doc) {
-            const currentBoard = doc.board || "main";
-            if (currentBoard != this.noteService.currentBoard) {
-                return;
-            }
-            const newNote = {
-                id: doc.id,
-                _rev: doc._rev,
-                text: doc.text,
-                x: doc.x,
-                y: doc.y,
-                width: doc.width,
-                height: doc.height,
-                color: doc.color,
-                textColor: doc.textColor,
-                board: doc.board,
-            };
-            const found = this.noteService.notes.filter(note => note.id === newNote.id);
-            if (found.length > 1) {
-                throw new Error("found more than one note with the same id");
-            }
-            switch (kind) {
-                case "new":
-                case "update":
-                    if (found.length == 0) {
-                        this.pushNewNote(newNote, false);
-                        break;
-                    }
-                    const existing = found[0];
-                    Object.keys(newNote).forEach(key => {
-                        if (existing.hasOwnProperty(key)) {
-                            if (existing[key] !== newNote[key]) {
-                                existing[key] = newNote[key];
-                            }
-                        }
-                        else {
-                            this.$set(existing, key, newNote[key]);
-                        }
-                    });
-                    break;
-                case "delete":
-                    this.noteService.notes = this.noteService.notes.filter(note => note.id !== doc._id);
-                    break;
-            }
-        },
         fitNotesToScreen(maxZoom = 0.7, padding = 20) {
             if (this.noteService.notes.length === 0) {
                 return;
@@ -349,7 +277,7 @@ export default Vue.extend({
     },
     async mounted() {
         this.noteService.db = new CouchClient(dbname, (kind, doc) => {
-            this.couchCallback(kind, doc);
+            this.noteService.couchCallback(kind, doc, this);
         });
         this.$refs.whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);

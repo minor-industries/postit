@@ -163,4 +163,37 @@ export class NoteService {
                 break;
         }
     }
+
+    align() {
+        const selected = this.notes.filter(note => note.selected);
+        if (selected.length == 0) {
+            return;
+        }
+
+        selected.sort(function (a, b): number {
+            return a.y - b.y;
+        })
+
+        const top = selected[0];
+        for (let i = 1; i < selected.length; i++) {
+            selected[i].x = top.x;
+            selected[i].y = top.y + i * 60;
+        }
+    }
+
+    horizontalAlign() {
+        const selected = this.notes.filter(note => note.selected);
+        if (selected.length == 0) {
+            return;
+        }
+
+        selected.sort(function (a, b): number {
+            return a.y - b.y;
+        })
+
+        const top = selected[0];
+        for (let i = 1; i < selected.length; i++) {
+            selected[i].x = top.x;
+        }
+    }
 }
