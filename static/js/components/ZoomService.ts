@@ -135,7 +135,7 @@ export function calculateZoom(
 ) {
     const boundingBox = calculateBoundingBox(boundingBoxes);
     const screen = {
-        width: window.innerWidth,
+        width: window.innerWidth, // TODO: don't like this being here
         height: window.innerHeight,
     };
 
