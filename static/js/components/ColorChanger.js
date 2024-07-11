@@ -1,4 +1,5 @@
 import { getColorOptions } from './Colors.js';
+import { openDialog } from "./Dialog.js";
 export async function changeNoteColor() {
     const colorOptions = getColorOptions();
     return new Promise((resolve) => {
@@ -7,7 +8,7 @@ export async function changeNoteColor() {
                 ${option.label}
             </button>
         `).join('');
-        const dialog = vex.dialog.open({
+        const dialog = openDialog({
             message: 'Select a color',
             input: colorHtml,
             buttons: [],

@@ -1,10 +1,11 @@
+import { openDialog } from "./Dialog.js";
 export function textInput(message, existingText, useTextarea = false) {
     return new Promise((resolve) => {
         const inputId = 'vex-input-note-text';
         const inputElement = useTextarea
             ? `<textarea id="${inputId}" name="noteText" class="vex-dialog-prompt-input" style="height: 100px;">${existingText}</textarea>`
             : `<input type="text" id="${inputId}" name="noteText" class="vex-dialog-prompt-input" value="${existingText}" />`;
-        const dialog = vex.dialog.open({
+        const dialog = openDialog({
             message: message,
             input: inputElement,
             buttons: [

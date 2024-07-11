@@ -6,6 +6,7 @@ import { CouchClient } from "./CouchClient.js";
 import { getBoundingBox } from "./NoteComponent.js";
 import { ZoomService } from "./ZoomService.js";
 import { NoteService } from "./NoteService.js";
+import { alertMessage } from "./Dialog.js";
 const dbname = "whiteboard-main";
 function getCurrentBoard() {
     const url = new URL(window.location.href);
@@ -146,7 +147,7 @@ export default Vue.extend({
         async handleEditNote() {
             const selectedNotes = this.noteService.notes.filter(note => note.selected);
             if (selectedNotes.length !== 1) {
-                vex.dialog.alert({ message: 'Please select exactly one note to edit.' });
+                alertMessage('Please select exactly one note to edit.');
                 return;
             }
             const note = selectedNotes[0];
