@@ -7,7 +7,7 @@ import {loadValue} from "./Api.js";
 import {getTextColorForBackground} from "./Colors.js";
 import {CouchClient, Document} from "./CouchClient.js";
 import {getBoundingBox, Note} from "./NoteComponent.js";
-import {calculateZoom, ZoomService} from "./ZoomService.js";
+import {ZoomService} from "./ZoomService.js";
 
 declare const vex: any; //TODO
 declare const uuid: any; //TODO
@@ -500,16 +500,11 @@ export default Vue.extend({
             if (this.notes.length === 0) {
                 return;
             }
-
-            const {zoom, panX, panY} = calculateZoom(this.notes.map(getBoundingBox), maxZoom, padding);
-
-            this.zoomService.zoom = zoom;
-            this.zoomService.panX = panX;
-            this.zoomService.panY = panY;
-
-            sessionStorage.setItem('zoomLevel', zoom.toString());
-            sessionStorage.setItem('panTranslateX', panX.toString());
-            sessionStorage.setItem('panTranslateY', panY.toString());
+            this.zoomService.calculateZoom(
+                this.notes.map(getBoundingBox),
+                maxZoom,
+                padding
+            );
         }
     },
 

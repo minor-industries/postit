@@ -6,7 +6,7 @@ import { loadValue } from "./Api.js";
 import { getTextColorForBackground } from "./Colors.js";
 import { CouchClient } from "./CouchClient.js";
 import { getBoundingBox } from "./NoteComponent.js";
-import { calculateZoom, ZoomService } from "./ZoomService.js";
+import { ZoomService } from "./ZoomService.js";
 const dbname = "whiteboard-main";
 function getCurrentBoard() {
     const url = new URL(window.location.href);
@@ -426,13 +426,7 @@ export default Vue.extend({
             if (this.notes.length === 0) {
                 return;
             }
-            const { zoom, panX, panY } = calculateZoom(this.notes.map(getBoundingBox), maxZoom, padding);
-            this.zoomService.zoom = zoom;
-            this.zoomService.panX = panX;
-            this.zoomService.panY = panY;
-            sessionStorage.setItem('zoomLevel', zoom.toString());
-            sessionStorage.setItem('panTranslateX', panX.toString());
-            sessionStorage.setItem('panTranslateY', panY.toString());
+            this.zoomService.calculateZoom(this.notes.map(getBoundingBox), maxZoom, padding);
         }
     },
     async mounted() {
