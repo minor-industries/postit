@@ -8,6 +8,7 @@ import {getBoundingBox, Note} from "./NoteComponent.js";
 import {ZoomService} from "./ZoomService.js";
 import {NoteService} from "./NoteService.js";
 import {alertMessage} from "./Dialog.js";
+import SelectionBox from "./SelectionBox.js"
 
 declare const interact: any // TODO
 
@@ -35,6 +36,9 @@ function getCurrentBoard() {
 
 export default Vue.extend({
     name: 'WhiteboardComponent',
+    components: {
+        SelectionBox,
+    },
     data(): WhiteboardComponentData {
         return {
             isDragging: false,

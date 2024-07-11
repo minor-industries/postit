@@ -32,7 +32,7 @@ export type SelectionBoxInstance = SelectionBoxData & {
     box: Box;
 };
 
-Vue.component('selection-box', {
+export default Vue.component('selection-box', {
     data(): SelectionBoxData {
         return {
             startX: 0,
