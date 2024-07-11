@@ -191,8 +191,7 @@ export default Vue.extend({
             const x = (svgPoint.x - this.zoomService.panX) / this.zoomService.zoom;
             const y = (svgPoint.y - this.zoomService.panY) / this.zoomService.zoom;
 
-            const note = this.noteService.addNoteAt(x, y, newText);
-            this.$watch(note.watchlist, note.callback);
+            this.noteService.addNoteAt(x, y, newText, this);
         },
 
         async addMulti(event: MouseEvent) {
@@ -209,8 +208,7 @@ export default Vue.extend({
 
             lines.forEach((line, index) => {
                 let text = line.trim();
-                const note = this.noteService.addNoteAt(x, y, text);
-                this.$watch(note.watchlist, note.callback);
+                this.noteService.addNoteAt(x, y, text, this);
                 y += 60
             });
         },
@@ -344,8 +342,7 @@ export default Vue.extend({
         },
 
         pushNewNote(baseNote: Note, dirty: boolean) {
-            const note = this.noteService.pushNewNote(baseNote, dirty)
-            this.$watch(note.watchlist, note.callback);
+            this.noteService.pushNewNote(baseNote, dirty, this);
         },
 
         couchCallback(kind: string, doc: Document) {

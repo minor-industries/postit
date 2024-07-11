@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import {nearbyColor, TextMeasurer} from "./Util.js";
-import {CouchClient} from "./CouchClient.js";
+import {CouchClient, Document} from "./CouchClient.js";
 import {Note} from "./NoteComponent.js";
 import {getTextColorForBackground} from "./Colors.js";
 
@@ -72,7 +72,7 @@ export class NoteService {
         return this.textMeasure.measureTextWidth(text, "20px Arial") + 20;
     }
 
-    pushNewNote(baseNote: Note, dirty: boolean) {
+    pushNewNote(baseNote: Note, dirty: boolean, component: Vue) {
         const note = Vue.observable({
             selected: false,
             isNoteDragging: false,
@@ -81,8 +81,7 @@ export class NoteService {
             ...baseNote,
         });
 
-        const result = {
-            watchlist: () => [
+        component.$watch(() => [
                 note.x,
                 note.y,
                 note.width,
@@ -91,17 +90,15 @@ export class NoteService {
                 note.color,
                 note.textColor,
                 note.board,
-            ],
-            callback: () => {
+            ], () => {
                 note.dirty = true;
             }
-        }
+        );
 
         this.notes.push(note);
-        return result;
     }
 
-    addNoteAt(x: number, y: number, text: string) {
+    addNoteAt(x: number, y: number, text: string, component: Vue) {
         const initialColor = nearbyColor(x, y, this.notes, 'yellow');
         const textColor = getTextColorForBackground(initialColor);
 
@@ -115,6 +112,55 @@ export class NoteService {
             color: initialColor,
             textColor: textColor,
         };
-        return this.pushNewNote(newNote, true);
+
+        this.pushNewNote(newNote, true, component);
+    }
+
+    couchCallback(kind: string, doc: Document, component: Vue) {
+        const currentBoard = doc.board || "main";
+        if (currentBoard != this.currentBoard) {
+            return;
+        }
+
+        const newNote: Note = {
+            id: doc.id,
+            _rev: doc._rev,
+            text: doc.text,
+            x: doc.x,
+            y: doc.y,
+            width: doc.width,
+            height: doc.height,
+            color: doc.color,
+            textColor: doc.textColor,
+            board: doc.board,
+        };
+
+        const found = this.notes.filter(note => note.id === newNote.id);
+        if (found.length > 1) {
+            throw new Error("found more than one note with the same id");
+        }
+
+        switch (kind) {
+            case "new":
+            case "update":
+                if (found.length == 0) {
+                    this.pushNewNote(newNote, false, component);
+                    break;
+                }
+                const existing = found[0];
+                Object.keys(newNote).forEach(key => {
+                    if (existing.hasOwnProperty(key)) {
+                        if ((existing as any)[key] !== (newNote as any)[key]) {
+                            (existing as any)[key] = (newNote as any)[key];
+                        }
+                    } else {
+                        component.$set(existing, key, (newNote as any)[key]);
+                    }
+                });
+                break;
+            case "delete":
+                this.notes = this.notes.filter(note => note.id !== doc._id);
+                break;
+        }
     }
 }

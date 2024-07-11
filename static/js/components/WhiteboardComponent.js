@@ -165,8 +165,7 @@ export default Vue.extend({
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
             const x = (svgPoint.x - this.zoomService.panX) / this.zoomService.zoom;
             const y = (svgPoint.y - this.zoomService.panY) / this.zoomService.zoom;
-            const note = this.noteService.addNoteAt(x, y, newText);
-            this.$watch(note.watchlist, note.callback);
+            this.noteService.addNoteAt(x, y, newText, this);
         },
         async addMulti(event) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
@@ -179,8 +178,7 @@ export default Vue.extend({
             let x = (svgPoint.x - this.zoomService.panX) / this.zoomService.zoom - 50;
             lines.forEach((line, index) => {
                 let text = line.trim();
-                const note = this.noteService.addNoteAt(x, y, text);
-                this.$watch(note.watchlist, note.callback);
+                this.noteService.addNoteAt(x, y, text, this);
                 y += 60;
             });
         },
@@ -295,8 +293,7 @@ export default Vue.extend({
             }
         },
         pushNewNote(baseNote, dirty) {
-            const note = this.noteService.pushNewNote(baseNote, dirty);
-            this.$watch(note.watchlist, note.callback);
+            this.noteService.pushNewNote(baseNote, dirty, this);
         },
         couchCallback(kind, doc) {
             const currentBoard = doc.board || "main";
