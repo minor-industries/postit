@@ -6,8 +6,7 @@ import { loadValue } from "./Api.js";
 import { getTextColorForBackground } from "./Colors.js";
 import { CouchClient } from "./CouchClient.js";
 import { getBoundingBox } from "./NoteComponent.js";
-import { calculateZoom } from "./autozoom.js";
-import { ZoomService } from "./ZoomService.js";
+import { calculateZoom, ZoomService } from "./ZoomService.js";
 const dbname = "whiteboard-main";
 function getCurrentBoard() {
     const url = new URL(window.location.href);

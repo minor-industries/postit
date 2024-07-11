@@ -7,8 +7,7 @@ import {loadValue} from "./Api.js";
 import {getTextColorForBackground} from "./Colors.js";
 import {CouchClient, Document} from "./CouchClient.js";
 import {getBoundingBox, Note} from "./NoteComponent.js";
-import {calculateZoom} from "./autozoom.js";
-import {ZoomService} from "./ZoomService.js";
+import {calculateZoom, ZoomService} from "./ZoomService.js";
 
 declare const vex: any; //TODO
 declare const uuid: any; //TODO

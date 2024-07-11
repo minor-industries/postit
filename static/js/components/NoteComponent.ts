@@ -1,5 +1,5 @@
 import Vue, {computed, defineComponent, onMounted, ref, watch} from "vue";
-import {BoundingBox} from "./autozoom.js";
+import {BoundingBox} from "./ZoomService.js";
 
 declare const interact: any;
 
