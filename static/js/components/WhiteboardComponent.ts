@@ -9,7 +9,6 @@ import {ZoomService} from "./ZoomService.js";
 import {NoteService} from "./NoteService.js";
 
 declare const vex: any; //TODO
-declare const uuid: any; //TODO
 declare const interact: any // TODO
 
 const dbname = "whiteboard-main"

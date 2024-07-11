@@ -3,8 +3,8 @@ import {nearbyColor, TextMeasurer} from "./Util.js";
 import {CouchClient, Document} from "./CouchClient.js";
 import {Note} from "./NoteComponent.js";
 import {getTextColorForBackground} from "./Colors.js";
+import { v4 as uuidv4 } from 'uuid';
 
-declare const uuid: any; //TODO
 
 interface NoteServiceConfig {
     textMeasure: TextMeasurer;
@@ -103,7 +103,7 @@ export class NoteService {
         const textColor = getTextColorForBackground(initialColor);
 
         const newNote: Note = {
-            id: uuid.v4(),
+            id: uuidv4(),
             text: text,
             x: x - 50,
             y: y - 25,
