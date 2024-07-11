@@ -3,7 +3,6 @@ import Vue from 'vue';
 import {nearbyColor, TextMeasurer} from "./Util.js";
 import {changeNoteColor} from "./ColorChanger.js";
 import {textInput} from "./EditNote.js";
-import {loadValue} from "./Api.js";
 import {getTextColorForBackground} from "./Colors.js";
 import {CouchClient, Document} from "./CouchClient.js";
 import {getBoundingBox, Note} from "./NoteComponent.js";
@@ -62,11 +61,6 @@ export default Vue.extend({
         },
     },
     methods: {
-        async loadNotes() {
-            const json = await loadValue("notes");
-            this.noteService.notes = JSON.parse(json.value);
-        },
-
         handleZoom(zoomFactor: number) {
             const svg = this.$refs.svgContainer as SVGSVGElement;
             this.zoomService.handleZoom(svg, zoomFactor);
@@ -130,7 +124,7 @@ export default Vue.extend({
 
             switch (action) {
                 case "fix-width":
-                    this.fixWidth();
+                    this.noteService.fixWidth();
                     return;
                 case "export":
                     for (let i = 0; i < selected.length; i++) {
@@ -138,9 +132,6 @@ export default Vue.extend({
                         await this.noteService.putNote(note);
                     }
                     return
-                case "load":
-                    await this.loadNotes();
-                    return;
                 case "show":
                     selected.forEach(note => {
                         console.log(JSON.stringify(note, null, 2));
@@ -163,18 +154,6 @@ export default Vue.extend({
                 default:
                     console.log(`unknown command: ${action}`)
             }
-        },
-
-        fixWidth() {
-            const selectedNotes = this.noteService.notes.filter(note => note.selected);
-            selectedNotes.forEach(note => {
-                note.text = note.text.trim();
-                note.width = this.calcWidth(note.text);
-            });
-        },
-
-        calcWidth(text: string): number {
-            return this.noteService.textMeasure.measureTextWidth(text, "20px Arial") + 20;
         },
 
         async oneDialog(callback: () => Promise<any>) {
@@ -201,7 +180,7 @@ export default Vue.extend({
                 return;
             }
             note.text = newText;
-            note.width = this.calcWidth(newText);
+            note.width = this.noteService.calcWidth(newText);
         },
 
         async addNoteAt(event: MouseEvent) {
@@ -222,7 +201,7 @@ export default Vue.extend({
                 text: newText,
                 x: adjustedX - 50,
                 y: adjustedY - 25,
-                width: this.calcWidth(newText),
+                width: this.noteService.calcWidth(newText),
                 height: 50,
                 color: initialColor,
                 textColor: textColor,
@@ -250,7 +229,7 @@ export default Vue.extend({
                     text: text,
                     x: x,
                     y: currentY,
-                    width: this.calcWidth(text),
+                    width: this.noteService.calcWidth(text),
                     height: 50,
                     color: "yellow",
                     textColor: "black"

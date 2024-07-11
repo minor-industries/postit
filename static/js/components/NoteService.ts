@@ -56,4 +56,16 @@ export class NoteService {
             _id: toSave.id,
         });
     }
+
+    fixWidth() {
+        const selectedNotes = this.notes.filter(note => note.selected);
+        selectedNotes.forEach(note => {
+            note.text = note.text.trim();
+            note.width = this.calcWidth(note.text);
+        });
+    }
+
+    calcWidth(text: string): number {
+        return this.textMeasure.measureTextWidth(text, "20px Arial") + 20;
+    }
 }
