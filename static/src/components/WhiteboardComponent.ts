@@ -9,8 +9,7 @@ import {ZoomService} from "./ZoomService.js";
 import {NoteService} from "./NoteService.js";
 import {alertMessage} from "./Dialog.js";
 import SelectionBox from "./SelectionBox.js"
-
-declare const interact: any // TODO
+import interact from 'interactjs';
 
 const dbname = "whiteboard-main"
 
@@ -325,7 +324,7 @@ export default Vue.extend({
         (this.$refs as any).whiteboard.focus();
         window.addEventListener('keydown', this.handleKeydown);
 
-        interact(this.$refs.svgContainer).draggable({
+        interact(this.$refs.svgContainer as HTMLElement).draggable({
             listeners: {
                 move: (event: any) => {
                     if (event.shiftKey) {

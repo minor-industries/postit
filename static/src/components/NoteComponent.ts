@@ -1,7 +1,6 @@
 import Vue, {computed, defineComponent, onMounted, ref, watch} from "vue";
 import {BoundingBox} from "./ZoomService.js";
-
-declare const interact: any;
+import interact from 'interactjs';
 
 interface SvgPoint {
     x: number;
