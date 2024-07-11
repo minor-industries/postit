@@ -1,9 +1,9 @@
 import Vue from 'vue';
-import {nearbyColor, TextMeasurer} from "./Util.js";
+import {nearbyColor, showNotification, TextMeasurer} from "./Util.js";
 import {CouchClient, Document} from "./CouchClient.js";
 import {Note} from "./NoteComponent.js";
 import {getTextColorForBackground} from "./Colors.js";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 
 
 interface NoteServiceConfig {
@@ -29,6 +29,8 @@ export class NoteService {
 
     async saveNotes() {
         const dirty = this.notes.filter(note => note.dirty);
+        let count = dirty.length + this.toDelete.length;
+
         for (let i = 0; i < dirty.length; i++) {
             const note = dirty[i];
             await this.putNote(note);
@@ -44,6 +46,10 @@ export class NoteService {
         }
 
         this.toDelete = [];
+
+        if (count > 0) {
+            showNotification("success", "notes saved");
+        }
     }
 
     async putNote(note: Note) {
