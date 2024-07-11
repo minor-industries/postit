@@ -7,6 +7,7 @@ import { getTextColorForBackground } from "./Colors.js";
 import { CouchClient } from "./CouchClient.js";
 import { getBoundingBox } from "./NoteComponent.js";
 import { ZoomService } from "./ZoomService.js";
+import { NoteService } from "./NoteService.js";
 const dbname = "whiteboard-main";
 function getCurrentBoard() {
     const url = new URL(window.location.href);
@@ -17,14 +18,14 @@ export default Vue.extend({
     name: 'WhiteboardComponent',
     data() {
         return {
-            notes: [],
-            toDelete: [],
             isDragging: false,
             isDialogOpen: false,
-            textMeasure: new TextMeasurer(),
-            db: null,
-            currentBoard: getCurrentBoard(),
             zoomService: new ZoomService(),
+            noteService: new NoteService({
+                db: null,
+                currentBoard: getCurrentBoard(),
+                textMeasure: new TextMeasurer(),
+            })
         };
     },
     computed: {
@@ -34,24 +35,24 @@ export default Vue.extend({
     },
     methods: {
         async saveNotes() {
-            const dirty = this.notes.filter(note => note.dirty);
+            const dirty = this.noteService.notes.filter(note => note.dirty);
             for (let i = 0; i < dirty.length; i++) {
                 const note = dirty[i];
                 await this.putNote(note);
                 note.dirty = false;
             }
-            for (let i = 0; i < this.toDelete.length; i++) {
-                const note = this.toDelete[i];
+            for (let i = 0; i < this.noteService.toDelete.length; i++) {
+                const note = this.noteService.toDelete[i];
                 if (note._rev === undefined) {
                     continue;
                 }
-                await this.db.delete(note);
+                await this.noteService.db.delete(note);
             }
-            this.toDelete = [];
+            this.noteService.toDelete = [];
         },
         async loadNotes() {
             const json = await loadValue("notes");
-            this.notes = JSON.parse(json.value);
+            this.noteService.notes = JSON.parse(json.value);
         },
         handleZoom(zoomFactor) {
             const svg = this.$refs.svgContainer;
@@ -88,7 +89,7 @@ export default Vue.extend({
                 if (!value) {
                     return;
                 }
-                this.notes.forEach(note => {
+                this.noteService.notes.forEach(note => {
                     if (note.selected) {
                         note.color = value.color;
                         note.textColor = value.textColor;
@@ -118,7 +119,7 @@ export default Vue.extend({
             if (!action) {
                 return;
             }
-            const selected = this.notes.filter(note => note.selected);
+            const selected = this.noteService.notes.filter(note => note.selected);
             switch (action) {
                 case "fix-width":
                     this.fixWidth();
@@ -156,14 +157,14 @@ export default Vue.extend({
             }
         },
         fixWidth() {
-            const selectedNotes = this.notes.filter(note => note.selected);
+            const selectedNotes = this.noteService.notes.filter(note => note.selected);
             selectedNotes.forEach(note => {
                 note.text = note.text.trim();
                 note.width = this.calcWidth(note.text);
             });
         },
         calcWidth(text) {
-            return this.textMeasure.measureTextWidth(text, "20px Arial") + 20;
+            return this.noteService.textMeasure.measureTextWidth(text, "20px Arial") + 20;
         },
         async oneDialog(callback) {
             if (this.isDialogOpen) {
@@ -178,7 +179,7 @@ export default Vue.extend({
             }
         },
         async handleEditNote() {
-            const selectedNotes = this.notes.filter(note => note.selected);
+            const selectedNotes = this.noteService.notes.filter(note => note.selected);
             if (selectedNotes.length !== 1) {
                 vex.dialog.alert({ message: 'Please select exactly one note to edit.' });
                 return;
@@ -199,7 +200,7 @@ export default Vue.extend({
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
             const adjustedX = (svgPoint.x - this.zoomService.panX) / this.zoomService.zoom;
             const adjustedY = (svgPoint.y - this.zoomService.panY) / this.zoomService.zoom;
-            const initialColor = nearbyColor(adjustedX, adjustedY, this.notes, 'yellow');
+            const initialColor = nearbyColor(adjustedX, adjustedY, this.noteService.notes, 'yellow');
             const textColor = getTextColorForBackground(initialColor);
             const newNote = {
                 id: uuid.v4(),
@@ -215,7 +216,7 @@ export default Vue.extend({
         },
         async putNote(note) {
             const { selected, isNoteDragging, dirty, ...toSave } = note;
-            await this.db.put({
+            await this.noteService.db.put({
                 ...toSave,
                 _id: toSave.id,
             });
@@ -254,7 +255,7 @@ export default Vue.extend({
             }
         },
         align() {
-            const selected = this.notes.filter(note => note.selected);
+            const selected = this.noteService.notes.filter(note => note.selected);
             if (selected.length == 0) {
                 return;
             }
@@ -268,7 +269,7 @@ export default Vue.extend({
             }
         },
         horizontalAlign() {
-            const selected = this.notes.filter(note => note.selected);
+            const selected = this.noteService.notes.filter(note => note.selected);
             if (selected.length == 0) {
                 return;
             }
@@ -289,7 +290,7 @@ export default Vue.extend({
         },
         updateNotePosition(note, dx, dy) {
             if (note.selected) {
-                this.notes.forEach(n => {
+                this.noteService.notes.forEach(n => {
                     if (n.selected) {
                         n.x += dx / this.zoomService.zoom;
                         n.y += dy / this.zoomService.zoom;
@@ -302,7 +303,7 @@ export default Vue.extend({
             }
         },
         handleSelectNotes(selectionBox) {
-            this.notes.forEach(note => {
+            this.noteService.notes.forEach(note => {
                 const selected = (note.x + note.width >= selectionBox.x &&
                     note.x <= selectionBox.x + selectionBox.width &&
                     note.y + note.height >= selectionBox.y &&
@@ -311,7 +312,7 @@ export default Vue.extend({
             });
         },
         selectNoteHandler(selectedNote) {
-            this.notes.forEach(note => {
+            this.noteService.notes.forEach(note => {
                 note.selected = note.id === selectedNote.id;
             });
         },
@@ -319,14 +320,14 @@ export default Vue.extend({
             this.isDragging = false;
         },
         unselectAllNotes() {
-            this.notes.forEach(note => {
+            this.noteService.notes.forEach(note => {
                 note.selected = false;
             });
         },
         deleteSelectedNotes() {
-            let toDelete = this.notes.filter(note => note.selected);
-            this.notes = this.notes.filter(note => !note.selected);
-            this.toDelete.push(...toDelete);
+            let toDelete = this.noteService.notes.filter(note => note.selected);
+            this.noteService.notes = this.noteService.notes.filter(note => !note.selected);
+            this.noteService.toDelete.push(...toDelete);
             toDelete.forEach(note => {
                 note.selected = false;
             });
@@ -360,10 +361,10 @@ export default Vue.extend({
                 selected: false,
                 isNoteDragging: false,
                 dirty: dirty,
-                board: this.currentBoard,
+                board: this.noteService.currentBoard,
                 ...baseNote,
             };
-            this.notes.push(note);
+            this.noteService.notes.push(note);
             this.$watch(() => [
                 note.x,
                 note.y,
@@ -379,7 +380,7 @@ export default Vue.extend({
         },
         couchCallback(kind, doc) {
             const currentBoard = doc.board || "main";
-            if (currentBoard != this.currentBoard) {
+            if (currentBoard != this.noteService.currentBoard) {
                 return;
             }
             const newNote = {
@@ -394,7 +395,7 @@ export default Vue.extend({
                 textColor: doc.textColor,
                 board: doc.board,
             };
-            const found = this.notes.filter(note => note.id === newNote.id);
+            const found = this.noteService.notes.filter(note => note.id === newNote.id);
             if (found.length > 1) {
                 throw new Error("found more than one note with the same id");
             }
@@ -418,19 +419,19 @@ export default Vue.extend({
                     });
                     break;
                 case "delete":
-                    this.notes = this.notes.filter(note => note.id !== doc._id);
+                    this.noteService.notes = this.noteService.notes.filter(note => note.id !== doc._id);
                     break;
             }
         },
         fitNotesToScreen(maxZoom = 0.7, padding = 20) {
-            if (this.notes.length === 0) {
+            if (this.noteService.notes.length === 0) {
                 return;
             }
-            this.zoomService.calculateZoom(this.notes.map(getBoundingBox), maxZoom, padding);
+            this.zoomService.calculateZoom(this.noteService.notes.map(getBoundingBox), maxZoom, padding);
         }
     },
     async mounted() {
-        this.db = new CouchClient(dbname, (kind, doc) => {
+        this.noteService.db = new CouchClient(dbname, (kind, doc) => {
             this.couchCallback(kind, doc);
         });
         this.$refs.whiteboard.focus();
@@ -451,8 +452,8 @@ export default Vue.extend({
             }
         });
         this.zoomService.restoreZoomAndPan();
-        await this.db.subscribe();
-        await this.db.loadDocs();
+        await this.noteService.db.subscribe();
+        await this.noteService.db.loadDocs();
     },
     beforeDestroy() {
         window.removeEventListener('keydown', this.handleKeydown);
@@ -471,7 +472,7 @@ export default Vue.extend({
             <line x1="-10" y1="0" x2="10" y2="0" stroke="grey" stroke-width="2"/>
             <line x1="0" y1="-10" x2="0" y2="10" stroke="grey" stroke-width="2"/>
 
-            <note-component v-for="note in notes"
+            <note-component v-for="note in noteService.notes"
                             :key="note.id"
                             :note="note"
                             :ref="'note-' + note.id"
