@@ -9,6 +9,7 @@ const NoteComponent = defineComponent({
     },
     setup(props, { emit }) {
         const note = ref(props.note);
+        const noteElement = ref(null);
         const noteStyle = computed(() => {
             const regularColor = note.value.color || "yellow";
             return {
@@ -30,7 +31,7 @@ const NoteComponent = defineComponent({
             }
         };
         onMounted(() => {
-            interact(note.value).draggable({
+            interact(noteElement.value).draggable({
                 listeners: {
                     start: (event) => {
                         if (event.shiftKey) {
@@ -58,13 +59,15 @@ const NoteComponent = defineComponent({
             });
         });
         return {
+            note,
             noteStyle,
             textStyle,
+            noteElement,
             selectNote
         };
     },
     template: `
-      <g :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click.stop="selectNote">
+      <g ref="noteElement" :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click.stop="selectNote">
         <rect class="note" :width="note.width" :height="note.height" :style="noteStyle"></rect>
         <text ref="text" x="10" y="30" :style="textStyle">
           {{ note.text }}
