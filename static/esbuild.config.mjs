@@ -7,9 +7,9 @@ const __dirname = dirname(__filename);
 const vuePath = resolve(__dirname, 'node_modules/vue/dist/vue.esm.js');
 
 build({
-    entryPoints: ['main.js'], // Update this to your entry point
+    entryPoints: ['./dist/main.js'], // Entry point in the dist directory
     bundle: true,
-    outfile: 'bundle.js',
+    outfile: './dist/bundle.js',
     format: 'esm',
     plugins: [
         {

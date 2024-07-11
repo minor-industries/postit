@@ -34,8 +34,8 @@ var config Config
 
 //go:embed static/css/*.css
 //go:embed static/*.html
-//go:embed static/js/*.js
-//go:embed static/js/components/*.js
+//go:embed static/dist/bundle.js
+
 var FS embed.FS
 
 func run() error {
@@ -66,20 +66,16 @@ func run() error {
 
 	staticFS, err := fs.Sub(FS, "static")
 	if err != nil {
-		return errors.Wrap(err, "get static file system")
+		panic(errors.Wrap(err, "get static file system"))
 	}
 	static := http.FS(staticFS)
 
 	if config.Server.StaticPath != "" {
 		r.Static("/static", config.Server.StaticPath)
-		r.StaticFile("postit.html", config.Server.StaticPath+"/postit.html")
-		r.StaticFile("boards.html", config.Server.StaticPath+"/boards.html")
+		r.StaticFile("bundle.js", config.Server.StaticPath+"/bundle.js")
 	} else {
-		r.GET("/postit.html", func(c *gin.Context) {
-			c.FileFromFS("postit.html", static)
-		})
-		r.GET("/boards.html", func(c *gin.Context) {
-			c.FileFromFS("boards.html", static)
+		r.GET("/bundle.js", func(c *gin.Context) {
+			c.FileFromFS("bundle.js", static)
 		})
 		r.StaticFS("/static", static)
 	}
