@@ -10,16 +10,17 @@
             margin: 20px auto;
             border-collapse: collapse;
         }
+
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
         }
+
         th {
             background-color: #f2f2f2;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.3.0/dist/pouchdb.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -66,7 +67,7 @@
     async function loadBoardCounts() {
         const client = new CouchClient('whiteboard-main');
         try {
-            const data = await client.queryView('by_board', { group: true });
+            const data = await client.queryView('by_board', {group: true});
             const tbody = document.getElementById('boardCountsTable').querySelector('tbody');
             data.rows.forEach(row => {
                 const tr = document.createElement('tr');

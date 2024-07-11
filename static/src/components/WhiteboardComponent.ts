@@ -13,12 +13,6 @@ declare const interact: any // TODO
 
 const dbname = "whiteboard-main"
 
-declare global {
-    interface Window {
-        PouchDB: any;
-    }
-}
-
 interface SelectionBox {
     x: number;
     y: number;
