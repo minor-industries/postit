@@ -72,7 +72,7 @@ export class NoteService {
         return this.textMeasure.measureTextWidth(text, "20px Arial") + 20;
     }
 
-    pushNewNote(baseNote: Note, dirty: boolean, component: Vue) {
+    private pushNewNote(baseNote: Note, dirty: boolean, component: Vue) {
         const note = Vue.observable({
             selected: false,
             isNoteDragging: false,

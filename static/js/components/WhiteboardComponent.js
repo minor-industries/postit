@@ -265,9 +265,6 @@ export default Vue.extend({
                 this.$refs.selectionBox.endSelection(event);
             }
         },
-        pushNewNote(baseNote, dirty) {
-            this.noteService.pushNewNote(baseNote, dirty, this);
-        },
         fitNotesToScreen(maxZoom = 0.7, padding = 20) {
             if (this.noteService.notes.length === 0) {
                 return;

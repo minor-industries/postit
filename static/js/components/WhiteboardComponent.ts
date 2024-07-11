@@ -308,10 +308,6 @@ export default Vue.extend({
             }
         },
 
-        pushNewNote(baseNote: Note, dirty: boolean) {
-            this.noteService.pushNewNote(baseNote, dirty, this);
-        },
-
         fitNotesToScreen(maxZoom: number = 0.7, padding: number = 20) {
             if (this.noteService.notes.length === 0) {
                 return;
