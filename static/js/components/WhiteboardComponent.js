@@ -197,9 +197,8 @@ export default Vue.extend({
                 return;
             }
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
-            const zs = this.zoomService;
-            const adjustedX = (svgPoint.x - zs.panX) / zs.zoom;
-            const adjustedY = (svgPoint.y - zs.panY) / zs.zoom;
+            const adjustedX = (svgPoint.x - this.zoomService.panX) / this.zoomService.zoom;
+            const adjustedY = (svgPoint.y - this.zoomService.panY) / this.zoomService.zoom;
             const initialColor = nearbyColor(adjustedX, adjustedY, this.notes, 'yellow');
             const textColor = getTextColorForBackground(initialColor);
             const newNote = {
@@ -227,10 +226,9 @@ export default Vue.extend({
             if (newText === null) {
                 return;
             }
-            const zs = this.zoomService;
             const lines = newText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            let currentY = (svgPoint.y - zs.panY) / zs.zoom;
-            let x = (svgPoint.x - zs.panX) / zs.zoom - 50;
+            let currentY = (svgPoint.y - this.zoomService.panY) / this.zoomService.zoom;
+            let x = (svgPoint.x - this.zoomService.panX) / this.zoomService.zoom - 50;
             lines.forEach((line, index) => {
                 let text = line.trim();
                 const newNote = {
@@ -290,18 +288,17 @@ export default Vue.extend({
             return point.matrixTransform(svg.getScreenCTM().inverse());
         },
         updateNotePosition(note, dx, dy) {
-            const zs = this.zoomService;
             if (note.selected) {
                 this.notes.forEach(n => {
                     if (n.selected) {
-                        n.x += dx / zs.zoom;
-                        n.y += dy / zs.zoom;
+                        n.x += dx / this.zoomService.zoom;
+                        n.y += dy / this.zoomService.zoom;
                     }
                 });
             }
             else {
-                note.x += dx / zs.zoom;
-                note.y += dy / zs.zoom;
+                note.x += dx / this.zoomService.zoom;
+                note.y += dy / this.zoomService.zoom;
             }
         },
         handleSelectNotes(selectionBox) {
@@ -430,10 +427,9 @@ export default Vue.extend({
                 return;
             }
             const { zoom, panX, panY } = calculateZoom(this.notes, maxZoom, padding);
-            const zs = this.zoomService;
-            zs.zoom = zoom;
-            zs.panX = panX;
-            zs.panY = panY;
+            this.zoomService.zoom = zoom;
+            this.zoomService.panX = panX;
+            this.zoomService.panY = panY;
             sessionStorage.setItem('zoomLevel', zoom.toString());
             sessionStorage.setItem('panTranslateX', panX.toString());
             sessionStorage.setItem('panTranslateY', panY.toString());
