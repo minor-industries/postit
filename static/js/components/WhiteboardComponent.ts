@@ -65,17 +65,6 @@ export default Vue.extend({
             return this.zoomService.groupTransform();
         },
     },
-    watch: {
-        'zoom.level'(newZoomLevel: number) {
-            sessionStorage.setItem('zoomLevel', newZoomLevel.toString());
-        },
-        'pan.translateX'(newTranslateX: number) {
-            sessionStorage.setItem('panTranslateX', newTranslateX.toString());
-        },
-        'pan.translateY'(newTranslateY: number) {
-            sessionStorage.setItem('panTranslateY', newTranslateY.toString());
-        }
-    },
     methods: {
         async saveNotes() {
             const dirty = this.notes.filter(note => note.dirty);
@@ -247,8 +236,8 @@ export default Vue.extend({
 
             const zs = this.zoomService;
 
-            const adjustedX = (svgPoint.x - zs.pan.translateX) / zs.zoom.level;
-            const adjustedY = (svgPoint.y - zs.pan.translateY) / zs.zoom.level;
+            const adjustedX = (svgPoint.x - zs.panX) / zs.zoom;
+            const adjustedY = (svgPoint.y - zs.panY) / zs.zoom;
 
             const initialColor = nearbyColor(adjustedX, adjustedY, this.notes, 'yellow');
             const textColor = getTextColorForBackground(initialColor);
@@ -291,8 +280,8 @@ export default Vue.extend({
             const zs = this.zoomService;
 
             const lines = newText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            let currentY = (svgPoint.y - zs.pan.translateY) / zs.zoom.level;
-            let x = (svgPoint.x - zs.pan.translateX) / zs.zoom.level - 50;
+            let currentY = (svgPoint.y - zs.panY) / zs.zoom;
+            let x = (svgPoint.x - zs.panX) / zs.zoom - 50;
 
             lines.forEach((line, index) => {
                 let text = line.trim();
@@ -366,13 +355,13 @@ export default Vue.extend({
             if (note.selected) {
                 this.notes.forEach(n => {
                     if (n.selected) {
-                        n.x += dx / zs.zoom.level;
-                        n.y += dy / zs.zoom.level;
+                        n.x += dx / zs.zoom;
+                        n.y += dy / zs.zoom;
                     }
                 });
             } else {
-                note.x += dx / zs.zoom.level;
-                note.y += dy / zs.zoom.level;
+                note.x += dx / zs.zoom;
+                note.y += dy / zs.zoom;
             }
         },
 
@@ -438,24 +427,6 @@ export default Vue.extend({
         handleMouseUp(event: MouseEvent) {
             if ((this.$refs as any).selectionBox.isActive) {
                 (this.$refs as any).selectionBox.endSelection(event);
-            }
-        },
-
-        restoreZoomAndPan() {
-            const zs = this.zoomService;
-            const storedZoomLevel = sessionStorage.getItem('zoomLevel');
-            if (storedZoomLevel) {
-                zs.zoom.level = parseFloat(storedZoomLevel);
-            }
-
-            const storedPanTranslateX = sessionStorage.getItem('panTranslateX');
-            if (storedPanTranslateX) {
-                zs.pan.translateX = parseFloat(storedPanTranslateX);
-            }
-
-            const storedPanTranslateY = sessionStorage.getItem('panTranslateY');
-            if (storedPanTranslateY) {
-                zs.pan.translateY = parseFloat(storedPanTranslateY);
             }
         },
 
@@ -539,9 +510,9 @@ export default Vue.extend({
             const {zoom, panX, panY} = calculateZoom(this.notes, maxZoom, padding);
 
             const zs = this.zoomService;
-            zs.zoom.level = zoom;
-            zs.pan.translateX = panX;
-            zs.pan.translateY = panY;
+            zs.zoom = zoom;
+            zs.panX = panX;
+            zs.panY = panY;
 
             sessionStorage.setItem('zoomLevel', zoom.toString());
             sessionStorage.setItem('panTranslateX', panX.toString());
@@ -564,8 +535,8 @@ export default Vue.extend({
                         return;
                     }
                     this.isDragging = true;
-                    this.zoomService.pan.translateX += event.dx;
-                    this.zoomService.pan.translateY += event.dy;
+                    this.zoomService.panX += event.dx;
+                    this.zoomService.panY += event.dy;
                 },
                 end: () => {
                     this.isDragging = false;
@@ -573,7 +544,7 @@ export default Vue.extend({
             }
         });
 
-        this.restoreZoomAndPan();
+        this.zoomService.restoreZoomAndPan();
         await this.db.subscribe();
         await this.db.loadDocs();
     },
