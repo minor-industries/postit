@@ -1,6 +1,6 @@
-import Vue from "vue";
-import { defineComponent, ref, computed, onMounted } from "vue";
+import Vue, { computed, defineComponent, onMounted, ref, watch } from "vue";
 const NoteComponent = defineComponent({
+    name: "NoteComponent",
     props: {
         note: {
             type: Object,
@@ -31,6 +31,9 @@ const NoteComponent = defineComponent({
             }
         };
         onMounted(() => {
+            if (!noteElement.value) {
+                return;
+            }
             interact(noteElement.value).draggable({
                 listeners: {
                     start: (event) => {
@@ -58,6 +61,9 @@ const NoteComponent = defineComponent({
                 }
             });
         });
+        watch(() => props.note, (newVal) => {
+            note.value = newVal;
+        });
         return {
             note,
             noteStyle,
@@ -67,7 +73,8 @@ const NoteComponent = defineComponent({
         };
     },
     template: `
-      <g ref="noteElement" :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click.stop="selectNote">
+      <g ref="noteElement" :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note"
+         @click.stop="selectNote">
         <rect class="note" :width="note.width" :height="note.height" :style="noteStyle"></rect>
         <text ref="text" x="10" y="30" :style="textStyle">
           {{ note.text }}
