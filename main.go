@@ -61,7 +61,7 @@ func run() error {
 	})
 
 	r.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusTemporaryRedirect, "postit.html")
+		c.Redirect(http.StatusTemporaryRedirect, "static/boards.html")
 	})
 
 	staticFS, err := fs.Sub(FS, "static")
