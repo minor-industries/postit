@@ -5,6 +5,7 @@ import { textInput } from "./EditNote.js";
 import { loadValue } from "./Api.js";
 import { getTextColorForBackground } from "./Colors.js";
 import { CouchClient } from "./CouchClient.js";
+import { getBoundingBox } from "./NoteComponent.js";
 import { calculateZoom } from "./autozoom.js";
 import { ZoomService } from "./ZoomService.js";
 const dbname = "whiteboard-main";
@@ -426,7 +427,7 @@ export default Vue.extend({
             if (this.notes.length === 0) {
                 return;
             }
-            const { zoom, panX, panY } = calculateZoom(this.notes, maxZoom, padding);
+            const { zoom, panX, panY } = calculateZoom(this.notes.map(getBoundingBox), maxZoom, padding);
             this.zoomService.zoom = zoom;
             this.zoomService.panX = panX;
             this.zoomService.panY = panY;

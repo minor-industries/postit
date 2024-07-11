@@ -84,3 +84,11 @@ const NoteComponent = defineComponent({
 });
 Vue.component('note-component', NoteComponent);
 export default NoteComponent;
+export function getBoundingBox(note) {
+    return {
+        minX: note.x,
+        minY: note.y,
+        maxX: note.x + note.width,
+        maxY: note.y + note.height,
+    };
+}

@@ -6,7 +6,7 @@ import {textInput} from "./EditNote.js";
 import {loadValue} from "./Api.js";
 import {getTextColorForBackground} from "./Colors.js";
 import {CouchClient, Document} from "./CouchClient.js";
-import {Note} from "./NoteComponent.js";
+import {getBoundingBox, Note} from "./NoteComponent.js";
 import {calculateZoom} from "./autozoom.js";
 import {ZoomService} from "./ZoomService.js";
 
@@ -502,7 +502,7 @@ export default Vue.extend({
                 return;
             }
 
-            const {zoom, panX, panY} = calculateZoom(this.notes, maxZoom, padding);
+            const {zoom, panX, panY} = calculateZoom(this.notes.map(getBoundingBox), maxZoom, padding);
 
             this.zoomService.zoom = zoom;
             this.zoomService.panX = panX;

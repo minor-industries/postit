@@ -1,6 +1,4 @@
-import {Note} from "./NoteComponent";
-
-interface BoundingBox {
+export interface BoundingBox {
     minX: number;
     minY: number;
     maxX: number;
@@ -12,13 +10,13 @@ interface ScreenDimensions {
     height: number;
 }
 
-function calculateBoundingBox(notes: Note[]): BoundingBox {
+function calculateBoundingBox(objects: BoundingBox[]): BoundingBox {
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    notes.forEach(note => {
-        minX = Math.min(minX, note.x);
-        minY = Math.min(minY, note.y);
-        maxX = Math.max(maxX, note.x + note.width);
-        maxY = Math.max(maxY, note.y + note.height);
+    objects.forEach(obj => {
+        minX = Math.min(minX, obj.minX);
+        minY = Math.min(minY, obj.minY);
+        maxX = Math.max(maxX, obj.maxX);
+        maxY = Math.max(maxY, obj.maxY);
     });
     return {minX, minY, maxX, maxY};
 }
@@ -51,11 +49,11 @@ function calculateOptimalZoomAndPan({boundingBox, screen, maxZoom = 2, padding =
 }
 
 export function calculateZoom(
-    notes: Note[],
+    boundingBoxes: BoundingBox[],
     maxZoom: number,
     padding: number
 ) {
-    const boundingBox = calculateBoundingBox(notes);
+    const boundingBox = calculateBoundingBox(boundingBoxes);
     const screen = {
         width: window.innerWidth,
         height: window.innerHeight,
@@ -68,4 +66,3 @@ export function calculateZoom(
         padding,
     });
 }
-

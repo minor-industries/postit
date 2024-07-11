@@ -1,4 +1,5 @@
 import Vue, {computed, defineComponent, onMounted, ref, watch} from "vue";
+import {BoundingBox} from "./autozoom.js";
 
 declare const interact: any;
 
@@ -129,3 +130,12 @@ const NoteComponent = defineComponent({
 Vue.component('note-component', NoteComponent);
 
 export default NoteComponent;
+
+export function getBoundingBox(note: Note): BoundingBox {
+    return {
+        minX: note.x,
+        minY: note.y,
+        maxX: note.x + note.width,
+        maxY: note.y + note.height,
+    };
+}
