@@ -1,8 +1,7 @@
 import Vue from 'vue';
-import { nearbyColor, TextMeasurer } from "./Util.js";
+import { TextMeasurer } from "./Util.js";
 import { changeNoteColor } from "./ColorChanger.js";
 import { textInput } from "./EditNote.js";
-import { getTextColorForBackground } from "./Colors.js";
 import { CouchClient } from "./CouchClient.js";
 import { getBoundingBox } from "./NoteComponent.js";
 import { ZoomService } from "./ZoomService.js";
@@ -164,21 +163,10 @@ export default Vue.extend({
                 return;
             }
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
-            const adjustedX = (svgPoint.x - this.zoomService.panX) / this.zoomService.zoom;
-            const adjustedY = (svgPoint.y - this.zoomService.panY) / this.zoomService.zoom;
-            const initialColor = nearbyColor(adjustedX, adjustedY, this.noteService.notes, 'yellow');
-            const textColor = getTextColorForBackground(initialColor);
-            const newNote = {
-                id: uuid.v4(),
-                text: newText,
-                x: adjustedX - 50,
-                y: adjustedY - 25,
-                width: this.noteService.calcWidth(newText),
-                height: 50,
-                color: initialColor,
-                textColor: textColor,
-            };
-            this.pushNewNote(newNote, true);
+            const x = (svgPoint.x - this.zoomService.panX) / this.zoomService.zoom;
+            const y = (svgPoint.y - this.zoomService.panY) / this.zoomService.zoom;
+            const note = this.noteService.addNoteAt(x, y, newText);
+            this.$watch(note.watchlist, note.callback);
         },
         async addMulti(event) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
@@ -316,8 +304,8 @@ export default Vue.extend({
             }
         },
         pushNewNote(baseNote, dirty) {
-            const result = this.noteService.pushNewNote(baseNote, dirty);
-            this.$watch(result.watchlist, result.callback);
+            const note = this.noteService.pushNewNote(baseNote, dirty);
+            this.$watch(note.watchlist, note.callback);
         },
         couchCallback(kind, doc) {
             const currentBoard = doc.board || "main";

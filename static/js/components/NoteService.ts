@@ -1,7 +1,10 @@
 import Vue from 'vue';
-import {TextMeasurer} from "./Util.js";
+import {nearbyColor, TextMeasurer} from "./Util.js";
 import {CouchClient} from "./CouchClient.js";
 import {Note} from "./NoteComponent.js";
+import {getTextColorForBackground} from "./Colors.js";
+
+declare const uuid: any; //TODO
 
 interface NoteServiceConfig {
     textMeasure: TextMeasurer;
@@ -96,5 +99,22 @@ export class NoteService {
 
         this.notes.push(note);
         return result;
+    }
+
+    addNoteAt(x: number, y: number, text: string) {
+        const initialColor = nearbyColor(x, y, this.notes, 'yellow');
+        const textColor = getTextColorForBackground(initialColor);
+
+        const newNote: Note = {
+            id: uuid.v4(),
+            text: text,
+            x: x - 50,
+            y: y - 25,
+            width: this.calcWidth(text),
+            height: 50,
+            color: initialColor,
+            textColor: textColor,
+        };
+        return this.pushNewNote(newNote, true);
     }
 }
