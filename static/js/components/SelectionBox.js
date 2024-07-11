@@ -22,8 +22,9 @@ Vue.component('selection-box', {
         startSelection(event) {
             this.isActive = true;
             const svgPoint = this.$parent.screenToSvgPoint(event.clientX, event.clientY);
-            this.startX = (svgPoint.x - this.$parent.pan.translateX) / this.$parent.zoom.level;
-            this.startY = (svgPoint.y - this.$parent.pan.translateY) / this.$parent.zoom.level;
+            const zoomService = this.$parent.zoomService;
+            this.startX = (svgPoint.x - zoomService.panX) / zoomService.zoom;
+            this.startY = (svgPoint.y - zoomService.panY) / zoomService.zoom;
             this.endX = this.startX;
             this.endY = this.startY;
         },
@@ -31,10 +32,11 @@ Vue.component('selection-box', {
             if (!this.isActive)
                 return;
             const svgPoint = this.$parent.screenToSvgPoint(event.clientX, event.clientY);
-            this.endX = (svgPoint.x - this.$parent.pan.translateX) / this.$parent.zoom.level;
-            this.endY = (svgPoint.y - this.$parent.pan.translateY) / this.$parent.zoom.level;
+            const zoomService = this.$parent.zoomService;
+            this.endX = (svgPoint.x - zoomService.panX) / zoomService.zoom;
+            this.endY = (svgPoint.y - zoomService.panY) / zoomService.zoom;
         },
-        endSelection(event) {
+        endSelection() {
             if (!this.isActive)
                 return;
             this.isActive = false;
@@ -42,8 +44,8 @@ Vue.component('selection-box', {
         }
     },
     template: `
-        <g v-if="isActive">
-            <rect :x="box.x" :y="box.y" :width="box.width" :height="box.height" fill="none" stroke="blue" />
-        </g>
+      <g v-if="isActive">
+        <rect :x="box.x" :y="box.y" :width="box.width" :height="box.height" fill="none" stroke="blue" />
+      </g>
     `
 });

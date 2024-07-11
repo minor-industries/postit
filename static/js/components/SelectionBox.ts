@@ -1,4 +1,5 @@
 import Vue from 'vue';
+import { ZoomService } from './ZoomService';
 
 interface SvgPoint {
     x: number;
@@ -12,15 +13,9 @@ interface Box {
     height: number;
 }
 
-interface ParentComponent {
+interface ParentComponent extends Vue {
     screenToSvgPoint(x: number, y: number): SvgPoint;
-    pan: {
-        translateX: number;
-        translateY: number;
-    };
-    zoom: {
-        level: number;
-    };
+    zoomService: ZoomService;
 }
 
 interface SelectionBoxData {
@@ -60,26 +55,28 @@ Vue.component('selection-box', {
         startSelection(this: SelectionBoxInstance, event: MouseEvent) {
             this.isActive = true;
             const svgPoint: SvgPoint = this.$parent.screenToSvgPoint(event.clientX, event.clientY);
-            this.startX = (svgPoint.x - this.$parent.pan.translateX) / this.$parent.zoom.level;
-            this.startY = (svgPoint.y - this.$parent.pan.translateY) / this.$parent.zoom.level;
+            const zoomService = this.$parent.zoomService;
+            this.startX = (svgPoint.x - zoomService.panX) / zoomService.zoom;
+            this.startY = (svgPoint.y - zoomService.panY) / zoomService.zoom;
             this.endX = this.startX;
             this.endY = this.startY;
         },
         updateSelection(this: SelectionBoxInstance, event: MouseEvent) {
             if (!this.isActive) return;
             const svgPoint: SvgPoint = this.$parent.screenToSvgPoint(event.clientX, event.clientY);
-            this.endX = (svgPoint.x - this.$parent.pan.translateX) / this.$parent.zoom.level;
-            this.endY = (svgPoint.y - this.$parent.pan.translateY) / this.$parent.zoom.level;
+            const zoomService = this.$parent.zoomService;
+            this.endX = (svgPoint.x - zoomService.panX) / zoomService.zoom;
+            this.endY = (svgPoint.y - zoomService.panY) / zoomService.zoom;
         },
-        endSelection(this: SelectionBoxInstance, event: MouseEvent) {
+        endSelection(this: SelectionBoxInstance) {
             if (!this.isActive) return;
             this.isActive = false;
             this.$emit('select-notes', this.box);
         }
     },
     template: `
-        <g v-if="isActive">
-            <rect :x="box.x" :y="box.y" :width="box.width" :height="box.height" fill="none" stroke="blue" />
-        </g>
+      <g v-if="isActive">
+        <rect :x="box.x" :y="box.y" :width="box.width" :height="box.height" fill="none" stroke="blue" />
+      </g>
     `
 });
