@@ -1,5 +1,5 @@
 import Vue from "vue";
-import WhiteboardComponent from './components/WhiteboardComponent.js';
+import WhiteboardComponent from './WhiteboardComponent.js';
 
 Vue.component('whiteboard-component', WhiteboardComponent);
 
