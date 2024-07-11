@@ -175,22 +175,13 @@ export default Vue.extend({
                 return;
             }
             const lines = newText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            let currentY = (svgPoint.y - this.zoomService.panY) / this.zoomService.zoom;
+            let y = (svgPoint.y - this.zoomService.panY) / this.zoomService.zoom;
             let x = (svgPoint.x - this.zoomService.panX) / this.zoomService.zoom - 50;
             lines.forEach((line, index) => {
                 let text = line.trim();
-                const newNote = {
-                    id: uuid.v4(),
-                    text: text,
-                    x: x,
-                    y: currentY,
-                    width: this.noteService.calcWidth(text),
-                    height: 50,
-                    color: "yellow",
-                    textColor: "black"
-                };
-                this.pushNewNote(newNote, true);
-                currentY += 60;
+                const note = this.noteService.addNoteAt(x, y, text);
+                this.$watch(note.watchlist, note.callback);
+                y += 60;
             });
         },
         async handleDoubleClick(event) {
