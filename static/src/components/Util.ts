@@ -1,4 +1,6 @@
 import {Note} from "./NoteComponent.js";
+import { Notyf } from 'notyf';
+import 'notyf/notyf.min.css';
 
 export function nearbyColor(x: number, y: number, notes: Note[], defaultColor: string = 'white'): string {
     const colorSums: { [color: string]: number } = {};
@@ -31,7 +33,6 @@ export function nearbyColor(x: number, y: number, notes: Note[], defaultColor: s
     return maxColor;
 }
 
-declare const Notyf: any; //TODO
 export function showNotification(type: 'success' | 'error', message: string) {
     switch (type) {
         case "success":

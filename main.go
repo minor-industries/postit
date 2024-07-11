@@ -34,7 +34,7 @@ var config Config
 
 //go:embed static/css/*.css
 //go:embed static/*.html
-//go:embed static/dist/bundle.js
+//go:embed static/dist/bundle.js static/dist/bundle.css
 //go:embed static/libs/*.js
 
 var FS embed.FS
