@@ -1,4 +1,5 @@
 import Vue from "vue";
+import { defineComponent, ref, computed, onMounted } from "vue";
 
 declare const interact: any;
 
@@ -38,36 +39,73 @@ interface InteractEvent {
 
 type NoteComponentInstance = Vue & { note: Note };
 
-const NoteComponent = Vue.extend({
+const NoteComponent = defineComponent({
     props: {
         note: {
             type: Object as () => Note,
             required: true
         }
     },
-    computed: {
-        noteStyle(this: NoteComponentInstance) {
-            const regularColor = this.note.color || "yellow";
+    setup(props, { emit }) {
+        const note = ref(props.note);
+
+        const noteStyle = computed(() => {
+            const regularColor = note.value.color || "yellow";
             return {
-                fill: this.note.selected ? 'lightblue' : regularColor,
-                stroke: this.note.selected ? 'red' : 'black',
-                strokeWidth: this.note.selected ? 2 : 1
+                fill: note.value.selected ? 'lightblue' : regularColor,
+                stroke: note.value.selected ? 'red' : 'black',
+                strokeWidth: note.value.selected ? 2 : 1
             };
-        },
-        textStyle(this: NoteComponentInstance) {
+        });
+
+        const textStyle = computed(() => {
             return {
-                fill: this.note.textColor || 'black',
-                fontFamily: 'Arial, sans-serif',  // Explicitly set the font family
-                fontSize: '20px'  // Explicitly set the font size
+                fill: note.value.textColor || 'black',
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '20px'
             };
-        }
-    },
-    methods: {
-        selectNote(this: NoteComponentInstance) {
-            if (!this.note.isNoteDragging) {
-                this.$emit('select-note', this.note);
+        });
+
+        const selectNote = () => {
+            if (!note.value.isNoteDragging) {
+                emit('select-note', note.value);
             }
-        },
+        };
+
+        onMounted(() => {
+            interact(note.value).draggable({
+                listeners: {
+                    start: (event: InteractEvent) => {
+                        if (event.shiftKey) {
+                            return;
+                        }
+                        note.value.isNoteDragging = true;
+                        emit('drag-start', note.value.selected);
+                    },
+                    move: (event: InteractEvent) => {
+                        if (event.shiftKey) {
+                            return;
+                        }
+                        emit('drag-move', { dx: event.dx, dy: event.dy });
+                    },
+                    end: (event: InteractEvent) => {
+                        if (event.shiftKey) {
+                            return;
+                        }
+                        setTimeout(() => {
+                            note.value.isNoteDragging = false;
+                        }, 100);
+                        emit('drag-end', note.value.selected);
+                    }
+                }
+            });
+        });
+
+        return {
+            noteStyle,
+            textStyle,
+            selectNote
+        };
     },
     template: `
       <g :transform="'translate(' + note.x + ',' + note.y + ')'" class="draggable-note" @click.stop="selectNote">
@@ -76,35 +114,7 @@ const NoteComponent = Vue.extend({
           {{ note.text }}
         </text>
       </g>
-    `,
-    mounted(this: NoteComponentInstance) {
-        interact(this.$el).draggable({
-            listeners: {
-                start: (event: InteractEvent) => {
-                    if (event.shiftKey) {
-                        return;
-                    }
-                    this.note.isNoteDragging = true;
-                    this.$emit('drag-start', this.note.selected);
-                },
-                move: (event: InteractEvent) => {
-                    if (event.shiftKey) {
-                        return;
-                    }
-                    this.$emit('drag-move', { dx: event.dx, dy: event.dy });
-                },
-                end: (event: InteractEvent) => {
-                    if (event.shiftKey) {
-                        return;
-                    }
-                    setTimeout(() => {
-                        this.note.isNoteDragging = false;
-                    }, 100);
-                    this.$emit('drag-end', this.note.selected);
-                }
-            }
-        });
-    }
+    `
 });
 
 Vue.component('note-component', NoteComponent);
