@@ -62,25 +62,6 @@ export default Vue.extend({
         },
     },
     methods: {
-        async saveNotes() {
-            const dirty = this.noteService.notes.filter(note => note.dirty);
-            for (let i = 0; i < dirty.length; i++) {
-                const note = dirty[i];
-                await this.putNote(note);
-                note.dirty = false;
-            }
-
-            for (let i = 0; i < this.noteService.toDelete.length; i++) {
-                const note = this.noteService.toDelete[i];
-                if (note._rev === undefined) {
-                    continue;
-                }
-                await this.noteService.db!.delete(note);
-            }
-
-            this.noteService.toDelete = [];
-        },
-
         async loadNotes() {
             const json = await loadValue("notes");
             this.noteService.notes = JSON.parse(json.value);
@@ -107,7 +88,7 @@ export default Vue.extend({
                 this.handleZoom(-zoomFactor);
             } else if (event.key === 's') {
                 event.preventDefault();
-                await this.saveNotes();
+                await this.noteService.saveNotes();
             } else if (event.key === 'd') {
                 event.preventDefault();
                 this.deleteSelectedNotes();
@@ -154,7 +135,7 @@ export default Vue.extend({
                 case "export":
                     for (let i = 0; i < selected.length; i++) {
                         const note = selected[i];
-                        await this.putNote(note);
+                        await this.noteService.putNote(note);
                     }
                     return
                 case "load":
@@ -249,19 +230,6 @@ export default Vue.extend({
             this.pushNewNote(newNote, true);
         },
 
-        async putNote(note: Note) {
-            const {
-                selected,
-                isNoteDragging,
-                dirty,
-                ...toSave
-            } = note;
-
-            await this.noteService.db!.put({
-                ...toSave,
-                _id: toSave.id,
-            });
-        },
 
         async addMulti(event: MouseEvent) {
             const svgPoint = this.screenToSvgPoint(event.clientX, event.clientY);
