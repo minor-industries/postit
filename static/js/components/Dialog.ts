@@ -7,6 +7,3 @@ export function openDialog(options: any) {
 export function alertMessage(message: string) {
     return vex.dialog.alert({message: message});
 }
-
-
-
