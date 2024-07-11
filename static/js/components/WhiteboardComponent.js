@@ -316,26 +316,8 @@ export default Vue.extend({
             }
         },
         pushNewNote(baseNote, dirty) {
-            let note = {
-                selected: false,
-                isNoteDragging: false,
-                dirty: dirty,
-                board: this.noteService.currentBoard,
-                ...baseNote,
-            };
-            this.noteService.notes.push(note);
-            this.$watch(() => [
-                note.x,
-                note.y,
-                note.width,
-                note.height,
-                note.text,
-                note.color,
-                note.textColor,
-                note.board,
-            ], () => {
-                note.dirty = true;
-            });
+            const result = this.noteService.pushNewNote(baseNote, dirty);
+            this.$watch(result.watchlist, result.callback);
         },
         couchCallback(kind, doc) {
             const currentBoard = doc.board || "main";

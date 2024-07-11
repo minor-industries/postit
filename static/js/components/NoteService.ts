@@ -68,4 +68,33 @@ export class NoteService {
     calcWidth(text: string): number {
         return this.textMeasure.measureTextWidth(text, "20px Arial") + 20;
     }
+
+    pushNewNote(baseNote: Note, dirty: boolean) {
+        const note = Vue.observable({
+            selected: false,
+            isNoteDragging: false,
+            dirty: dirty,
+            board: this.currentBoard,
+            ...baseNote,
+        });
+
+        const result = {
+            watchlist: () => [
+                note.x,
+                note.y,
+                note.width,
+                note.height,
+                note.text,
+                note.color,
+                note.textColor,
+                note.board,
+            ],
+            callback: () => {
+                note.dirty = true;
+            }
+        }
+
+        this.notes.push(note);
+        return result;
+    }
 }
