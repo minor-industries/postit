@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"io/fs"
@@ -22,6 +21,7 @@ type Config struct {
 	Server struct {
 		Addr       string `toml:"addr"`
 		StaticPath string `toml:"static_path"`
+		Production bool   `toml:"production"`
 	} `toml:"server"`
 
 	CouchDB struct {
@@ -48,8 +48,12 @@ func run() error {
 		return errors.Wrap(err, "decode toml config")
 	}
 
+	if config.Server.Production {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	r := gin.Default()
-	r.Use(gzip.Gzip(gzip.BestCompression, gzip.WithExcludedExtensions([]string{".gz"})))
+	//r.Use(gzip.Gzip(gzip.BestCompression, gzip.WithExcludedExtensions([]string{".gz"})))
 
 	// Initialize the database
 	dbPath := os.ExpandEnv("$HOME/postit.db")
