@@ -15,6 +15,6 @@
     "vue": "^2.7.16"
   },
   "scripts": {
-    "build": "tsc && node esbuild.config.mjs"
+    "build": "tsc && node esbuild.config.mjs && gzip -9 -k -f dist/bundle.js"
   }
 }

@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"io/fs"
@@ -35,7 +34,9 @@ var config Config
 
 //go:embed static/css/*.css
 //go:embed static/*.html
-//go:embed static/dist/bundle.js static/dist/bundle.css
+//go:embed static/dist/bundle.js
+//go:embed static/dist/bundle.css
+//go:embed static/dist/bundle.js.gz
 //go:embed static/libs/*.js
 
 var FS embed.FS
@@ -47,7 +48,6 @@ func run() error {
 	}
 
 	r := gin.Default()
-	r.Use(gzip.Gzip(gzip.BestCompression))
 
 	// Initialize the database
 	dbPath := os.ExpandEnv("$HOME/postit.db")
@@ -75,8 +75,19 @@ func run() error {
 
 	if config.Server.StaticPath != "" {
 		r.Static("/static", config.Server.StaticPath)
+		r.GET("/bundle.js", func(c *gin.Context) {
+			c.Header("Content-Encoding", "gzip")
+			c.Header("Content-Type", "application/javascript")
+			filepath := config.Server.StaticPath + "/dist/bundle.js.gz"
+			c.File(filepath)
+		})
 	} else {
 		r.StaticFS("/static", static)
+		r.GET("/bundle.js", func(c *gin.Context) {
+			c.Header("Content-Encoding", "gzip")
+			c.Header("Content-Type", "application/javascript")
+			c.FileFromFS("dist/bundle.js.gz", static)
+		})
 	}
 
 	r.POST("/twirp/kv.KVService/*Method", gin.WrapH(kv.NewKVServiceServer(s, nil)))
