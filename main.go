@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"io/fs"
@@ -46,6 +47,7 @@ func run() error {
 	}
 
 	r := gin.Default()
+	r.Use(gzip.Gzip(gzip.BestCompression))
 
 	// Initialize the database
 	dbPath := os.ExpandEnv("$HOME/postit.db")
@@ -73,11 +75,7 @@ func run() error {
 
 	if config.Server.StaticPath != "" {
 		r.Static("/static", config.Server.StaticPath)
-		r.StaticFile("bundle.js", config.Server.StaticPath+"/bundle.js")
 	} else {
-		r.GET("/bundle.js", func(c *gin.Context) {
-			c.FileFromFS("bundle.js", static)
-		})
 		r.StaticFS("/static", static)
 	}
 

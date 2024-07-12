@@ -21,34 +21,38 @@ export class CouchClient {
             include_docs: 'true',
             heartbeat: '5000',
             timeout: '60000'
-        }).toString()
+        }).toString();
 
         const changesUrl = `${this.url}/${this.dbname}/_changes?${queryString}`;
-        const eventSource = new EventSource(
-            changesUrl,
-            // {withCredentials: true}
-        );
+        const eventSource = new EventSource(changesUrl);
+
+        const closeConnection = () => {
+            if (eventSource.readyState !== EventSource.CLOSED) {
+                eventSource.close();
+            }
+        };
+
+        // Add event listener to handle page close or reload
+        window.addEventListener('beforeunload', closeConnection);
 
         return new Promise((resolve) => {
             eventSource.onopen = (event: Event) => {
                 resolve(null);
-            }
+            };
 
             eventSource.onmessage = (event: MessageEvent) => {
-                // console.log("message");
                 const change: CouchDBChangeResponse = JSON.parse(event.data);
-                // console.log('Change detected');
-                // console.log(JSON.stringify(change));
-
-                // TODO: update sequence number
                 this.updateDoc(change.doc);
             };
 
             eventSource.onerror = (err: Event) => {
                 console.error('Error detected:', err);
-                eventSource.close(); // TODO: need to reconnect with the highest seen sequence number
+                closeConnection(); // Close the connection on error
                 resolve(err); // TODO: think more about this
             };
+        }).finally(() => {
+            // Remove event listener when the subscription is complete or rejected
+            window.removeEventListener('beforeunload', closeConnection);
         });
     }
 

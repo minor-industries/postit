@@ -4,9 +4,9 @@ go 1.21.1
 
 require (
 	github.com/BurntSushi/toml v1.4.0
+	github.com/gin-contrib/gzip v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/glebarez/sqlite v1.11.0
-	github.com/jessevdk/go-flags v1.6.1
 	github.com/pkg/errors v0.9.1
 	github.com/twitchtv/twirp v8.1.3+incompatible
 	google.golang.org/protobuf v1.34.1
