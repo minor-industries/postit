@@ -11,6 +11,12 @@ interface ScreenDimensions {
 }
 
 export class ZoomService {
+    constructor(board: string) {
+        this.board = board;
+    }
+
+    private board: string;
+
     private _zoom: number = 1;
     private _panX: number = 0;
     private _panY: number = 0;
@@ -21,7 +27,7 @@ export class ZoomService {
 
     set zoom(value: number) {
         this._zoom = value;
-        sessionStorage.setItem('zoomLevel', value.toString());
+        sessionStorage.setItem(`${this.board}-zoom`, value.toString());
     }
 
     get panX(): number {
@@ -30,7 +36,7 @@ export class ZoomService {
 
     set panX(value: number) {
         this._panX = value;
-        sessionStorage.setItem('panTranslateX', value.toString());
+        sessionStorage.setItem(`${this.board}-panX`, value.toString());
     }
 
     get panY(): number {
@@ -39,7 +45,7 @@ export class ZoomService {
 
     set panY(value: number) {
         this._panY = value;
-        sessionStorage.setItem('panTranslateY', value.toString());
+        sessionStorage.setItem(`${this.board}-panY`, value.toString());
     }
 
     handleZoom(svg: SVGSVGElement, zoomFactor: number) {
@@ -67,18 +73,23 @@ export class ZoomService {
         return {x: centerX, y: centerY};
     }
 
+    get hasSavedSettings(): boolean {
+        const value = sessionStorage.getItem(`${this.board}-zoom`);
+        return value !== null;
+    }
+
     restoreZoomAndPan() {
-        const storedZoomLevel = sessionStorage.getItem('zoomLevel');
+        const storedZoomLevel = sessionStorage.getItem(`${this.board}-zoom`);
         if (storedZoomLevel) {
             this.zoom = parseFloat(storedZoomLevel);
         }
 
-        const storedPanTranslateX = sessionStorage.getItem('panTranslateX');
+        const storedPanTranslateX = sessionStorage.getItem(`${this.board}-panX`);
         if (storedPanTranslateX) {
             this.panX = parseFloat(storedPanTranslateX);
         }
 
-        const storedPanTranslateY = sessionStorage.getItem('panTranslateY');
+        const storedPanTranslateY = sessionStorage.getItem(`${this.board}-panY`);
         if (storedPanTranslateY) {
             this.panY = parseFloat(storedPanTranslateY);
         }

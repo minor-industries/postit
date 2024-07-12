@@ -39,13 +39,14 @@ export default Vue.extend({
         SelectionBox,
     },
     data(): WhiteboardComponentData {
+        let board = getCurrentBoard();
         return {
             isDragging: false,
             isDialogOpen: false,
-            zoomService: new ZoomService(),
+            zoomService: new ZoomService(board),
             noteService: new NoteService({
                 db: null,
-                currentBoard: getCurrentBoard(),
+                currentBoard: board,
                 textMeasure: new TextMeasurer(),
             })
         };
@@ -343,6 +344,9 @@ export default Vue.extend({
         this.zoomService.restoreZoomAndPan();
         await this.noteService.db.subscribe();
         await this.noteService.db.loadDocs();
+        if (!this.zoomService.hasSavedSettings) {
+            this.fitNotesToScreen();
+        }
     },
 
     beforeDestroy() {
